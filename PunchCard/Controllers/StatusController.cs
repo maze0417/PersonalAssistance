@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using PunchCard.Clients;
+using PunchCard.Models;
 using PunchCard.Services;
 
 // ReSharper disable InconsistentNaming
@@ -18,7 +20,7 @@ namespace PunchCard.Controllers
         }
 
         [Route("status"), HttpGet]
-        public ServiceStatus GetServerStatus()
+        public async Task<ServiceStatus> GetServerStatusAsync()
         {
             return new ServiceStatus
             {
@@ -32,7 +34,8 @@ namespace PunchCard.Controllers
                 version = GetType().Assembly.GetName().Version.ToString(),
                 punch_responses = _hrResourceService.GetAllPunchResponse(),
                 last_timer_time = _hrResourceService.LastTimerTime.ToString(CultureInfo.InvariantCulture),
-                work_time = _hrResourceService.WorkerTime.ToString(@"hh\:mm\:ss")
+                work_time = _hrResourceService.WorkerTime.ToString(@"hh\:mm\:ss"),
+                card_time = await _hrResourceService.GetDayCardDetailAsync()
             };
         }
 
@@ -49,6 +52,8 @@ namespace PunchCard.Controllers
             public PunchCardResponse[] punch_responses { get; set; }
             public string last_timer_time { get; set; }
             public string work_time { get; set; }
+
+            public List<string> card_time { get; set; }
         }
     }
 }

@@ -1,10 +1,7 @@
-﻿using System;
-using System.IO;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PunchCard.Clients;
 using PunchCard.Services;
 
 namespace PunchCard
@@ -48,7 +45,10 @@ namespace PunchCard
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
             var client = app.ApplicationServices.GetService<IHrResourceService>();
-
+            applicationLifetime.ApplicationStarted.Register(() =>
+            {
+                client.PunchCardAsync().GetAwaiter().GetResult();
+            });
             applicationLifetime.ApplicationStopping.Register(() =>
             {
                 client.PunchCardAsync().GetAwaiter().GetResult();
