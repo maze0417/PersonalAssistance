@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -12,23 +13,57 @@ using Newtonsoft.Json;
 
 namespace PunchCard.Clients
 {
-    public interface IHrResourceClient
+    public interface IHrResourceService
     {
         Task<PunchCardResponse> PunchCardAsync();
 
-        PunchCardResponse[] GetServiceCallLogs();
+        PunchCardResponse[] GetAllPunchResponse();
+
+        DateTime LastTimerTime { get; set; }
+
+        TimeSpan WorkerTime { get; set; }
     }
 
-    public class HrResourceClient : BaseApiClient, IHrResourceClient
+    public class HrResourceService : BaseApiClient, IHrResourceService
     {
         private const string Url = "https://pro.104.com.tw/";
         private static readonly ConcurrentQueue<PunchCardResponse> MemoryLog = new ConcurrentQueue<PunchCardResponse>();
+        private readonly Timer timer;
 
-        public HrResourceClient(ILogger<HrResourceClient> logger) : base(logger)
+        public HrResourceService(ILogger<HrResourceService> logger) : base(logger)
         {
+            var instance = (IHrResourceService)this;
+            timer = new Timer(stat =>
+            {
+                instance.LastTimerTime = DateTime.Now;
+                var res = instance.GetAllPunchResponse();
+                if (res.Length == 0)
+                {
+                    instance.PunchCardAsync().GetAwaiter().GetResult();
+                    return;
+                }
+
+                if (res.Length >= 2)
+                {
+                    var last = res.Last();
+                    var first = res.First();
+                    var total = last.punchTime - first.punchTime;
+                    if (total.Hours >= 9)
+                    {
+                        return;
+                    }
+                }
+                var workerTime = DateTime.Now - res.Last().punchTime;
+                instance.WorkerTime = workerTime;
+                if (workerTime.TotalHours >= 9)
+                {
+                    instance.PunchCardAsync().GetAwaiter().GetResult();
+                    return;
+                }
+            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1));
         }
 
-        async Task<PunchCardResponse> IHrResourceClient.PunchCardAsync()
+        async Task<PunchCardResponse> IHrResourceService.PunchCardAsync()
         {
             var content = new PunchCardRequest
             {
@@ -47,6 +82,8 @@ namespace PunchCard.Clients
             request.Headers.Add("Accept", "application/json");
             request.Headers.Add("cookie", "BS2=undefined; CID=5fa91844ee7ee888174469f18dae49aa; PID=412885c0252a668c235d9dc87fbc70ad; proapp=1");
             var response = await SendAsync<PunchCardResponse>(request);
+            response.punchTime = DateTime.Now;
+
             MemoryLog.Enqueue(response);
             while (MemoryLog.Count > 50)
             {
@@ -55,10 +92,13 @@ namespace PunchCard.Clients
             return response;
         }
 
-        PunchCardResponse[] IHrResourceClient.GetServiceCallLogs()
+        PunchCardResponse[] IHrResourceService.GetAllPunchResponse()
         {
             return MemoryLog.Reverse().ToArray();
         }
+
+        DateTime IHrResourceService.LastTimerTime { get; set; }
+        TimeSpan IHrResourceService.WorkerTime { get; set; }
     }
 
     public class PunchCardRequest
@@ -98,5 +138,6 @@ namespace PunchCard.Clients
         public string message { get; set; }
         public List<UserData> data { get; set; }
         public string errorCode { get; set; }
+        public DateTime punchTime { get; set; }
     }
 }

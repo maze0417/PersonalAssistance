@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System;
+using System.IO;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +20,7 @@ namespace PunchCard
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<IHrResourceClient, HrResourceClient>();
+            services.AddSingleton<IHrResourceService, HrResourceService>();
             services.AddLogging();
             services.AddMvc();
         }
@@ -44,9 +46,15 @@ namespace PunchCard
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
-            var client = app.ApplicationServices.GetService<IHrResourceClient>();
-            applicationLifetime.ApplicationStarted.Register(() => client.PunchCardAsync().GetAwaiter().GetResult());
-            applicationLifetime.ApplicationStopping.Register(() => client.PunchCardAsync().GetAwaiter().GetResult());
+            var client = app.ApplicationServices.GetService<IHrResourceService>();
+            applicationLifetime.ApplicationStarted.Register(() =>
+            {
+                client.PunchCardAsync().GetAwaiter().GetResult();
+            });
+            applicationLifetime.ApplicationStopping.Register(() =>
+            {
+                client.PunchCardAsync().GetAwaiter().GetResult();
+            });
         }
     }
 }

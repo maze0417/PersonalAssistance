@@ -1,18 +1,19 @@
 ﻿using System;
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using PunchCard.Clients;
+
+// ReSharper disable InconsistentNaming
 
 namespace PunchCard.Controllers
 {
     public class StatusController : Controller
     {
-        private readonly IHrResourceClient _hrResourceClient;
+        private readonly IHrResourceService _hrResourceService;
 
-        public StatusController(IHrResourceClient hrResourceClient)
+        public StatusController(IHrResourceService hrResourceService)
         {
-            _hrResourceClient = hrResourceClient;
+            _hrResourceService = hrResourceService;
         }
 
         [Route("status"), HttpGet]
@@ -28,7 +29,9 @@ namespace PunchCard.Controllers
                 server_name = Environment.MachineName,
                 location = AppDomain.CurrentDomain.BaseDirectory,
                 version = GetType().Assembly.GetName().Version.ToString(),
-                LogResponses = _hrResourceClient.GetServiceCallLogs()
+                punch_responses = _hrResourceService.GetAllPunchResponse(),
+                last_timer_time = _hrResourceService.LastTimerTime.ToString(CultureInfo.InvariantCulture),
+                work_time = _hrResourceService.WorkerTime.ToString(@"hh\:mm\:ss")
             };
         }
 
@@ -42,7 +45,9 @@ namespace PunchCard.Controllers
             public string server_name { get; set; }
             public string location { get; set; }
             public string version { get; set; }
-            public PunchCardResponse[] LogResponses { get; set; }
+            public PunchCardResponse[] punch_responses { get; set; }
+            public string last_timer_time { get; set; }
+            public string work_time { get; set; }
         }
     }
 }
