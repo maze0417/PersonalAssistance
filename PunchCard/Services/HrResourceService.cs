@@ -8,10 +8,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using PunchCard.Clients;
 
 // ReSharper disable InconsistentNaming
 
-namespace PunchCard.Clients
+namespace PunchCard.Services
 {
     public interface IHrResourceService
     {
@@ -28,12 +29,11 @@ namespace PunchCard.Clients
     {
         private const string Url = "https://pro.104.com.tw/";
         private static readonly ConcurrentQueue<PunchCardResponse> MemoryLog = new ConcurrentQueue<PunchCardResponse>();
-        private readonly Timer timer;
 
         public HrResourceService(ILogger<HrResourceService> logger) : base(logger)
         {
             var instance = (IHrResourceService)this;
-            timer = new Timer(stat =>
+            new Timer(s =>
             {
                 instance.LastTimerTime = DateTime.Now;
                 var res = instance.GetAllPunchResponse();
@@ -53,12 +53,11 @@ namespace PunchCard.Clients
                         return;
                     }
                 }
-                var workerTime = DateTime.Now - res.Last().punchTime;
+                var workerTime = DateTime.Now - res.First().punchTime;
                 instance.WorkerTime = workerTime;
                 if (workerTime.TotalHours >= 9)
                 {
                     instance.PunchCardAsync().GetAwaiter().GetResult();
-                    return;
                 }
             }, null, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1));
         }

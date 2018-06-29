@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PunchCard.Clients;
+using PunchCard.Services;
 
 namespace PunchCard
 {

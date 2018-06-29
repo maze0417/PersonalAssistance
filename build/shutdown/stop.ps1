@@ -1,1 +1,0 @@
-﻿Stop-Service PunchCardService;

@@ -1,0 +1,1 @@
+﻿runas /user:administrator /savecred "sc stop PunchCardService"
