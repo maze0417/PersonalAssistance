@@ -48,10 +48,7 @@ namespace PunchCard
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
             var client = app.ApplicationServices.GetService<IHrResourceService>();
-            applicationLifetime.ApplicationStarted.Register(() =>
-            {
-                client.PunchCardAsync().GetAwaiter().GetResult();
-            });
+
             applicationLifetime.ApplicationStopping.Register(() =>
             {
                 client.PunchCardAsync().GetAwaiter().GetResult();
