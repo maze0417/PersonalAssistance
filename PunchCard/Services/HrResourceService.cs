@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -21,7 +20,7 @@ namespace PunchCard.Services
 
         Task<List<string>> GetDayCardDetailAsync();
 
-        PunchCardResponse[] GetAllPunchResponse();
+        DateTime[] CachedPunchTime { get; set; }
 
         DateTime LastTimerTime { get; set; }
 
@@ -31,7 +30,6 @@ namespace PunchCard.Services
     public class HrResourceService : BaseApiClient, IHrResourceService
     {
         private const string Url = "https://pro.104.com.tw/";
-        private static readonly ConcurrentQueue<PunchCardResponse> MemoryLog = new ConcurrentQueue<PunchCardResponse>();
 
         public HrResourceService(ILogger<HrResourceService> logger) : base(logger)
         {
@@ -39,33 +37,41 @@ namespace PunchCard.Services
             new Timer(s =>
             {
                 instance.LastTimerTime = DateTime.Now;
-                var res = instance.GetAllPunchResponse();
-                if (res.Length == 0)
+                var cachePunchTime = instance.CachedPunchTime;
+                if (cachePunchTime == null || cachePunchTime.Length == 0)
                 {
-                    instance.PunchCardAsync().GetAwaiter().GetResult();
-                    return;
+                    var cardTime = instance.GetDayCardDetailAsync().GetAwaiter().GetResult();
+                    if (cardTime == null || cardTime.Count == 0)
+                    {
+                        instance.PunchCardAsync().GetAwaiter().GetResult();
+                        return;
+                    }
+
+                    instance.CachedPunchTime =
+                        cardTime.Select(a => DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} {a}")).ToArray();
                 }
 
-                if (res.Length >= 2)
+                if (cachePunchTime == null)
                 {
-                    var last = res.Last();
-                    var first = res.First();
-                    var total = last.punchTime - first.punchTime;
+                    return;
+                }
+                instance.WorkerTime = DateTime.Now - cachePunchTime.First();
+                if (cachePunchTime.Length >= 2)
+                {
+                    var total = cachePunchTime.Last() - cachePunchTime.First();
                     if (total.Hours >= 9)
                     {
                         return;
                     }
                 }
-                var workerTime = DateTime.Now - res.First().punchTime;
-                instance.WorkerTime = workerTime;
-                if (workerTime.TotalHours >= 9)
+                if (instance.WorkerTime.TotalHours >= 9)
                 {
                     instance.PunchCardAsync().GetAwaiter().GetResult();
                 }
             }, null, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1));
         }
 
-        async Task<PunchCardResponse> IHrResourceService.PunchCardAsync()
+        Task<PunchCardResponse> IHrResourceService.PunchCardAsync()
         {
             var content = new PunchCardRequest
             {
@@ -83,15 +89,7 @@ namespace PunchCard.Services
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             request.Headers.Add("Accept", "application/json");
             request.Headers.Add("cookie", "BS2=undefined; CID=5fa91844ee7ee888174469f18dae49aa; PID=412885c0252a668c235d9dc87fbc70ad; proapp=1");
-            var response = await SendAsync<PunchCardResponse>(request);
-            response.punchTime = DateTime.Now;
-
-            MemoryLog.Enqueue(response);
-            while (MemoryLog.Count > 50)
-            {
-                MemoryLog.TryDequeue(out _);
-            }
-            return response;
+            return SendAsync<PunchCardResponse>(request);
         }
 
         async Task<List<string>> IHrResourceService.GetDayCardDetailAsync()
@@ -116,10 +114,7 @@ namespace PunchCard.Services
             return response.data.First().cardTime;
         }
 
-        PunchCardResponse[] IHrResourceService.GetAllPunchResponse()
-        {
-            return MemoryLog.Reverse().ToArray();
-        }
+        DateTime[] IHrResourceService.CachedPunchTime { get; set; }
 
         DateTime IHrResourceService.LastTimerTime { get; set; }
         TimeSpan IHrResourceService.WorkerTime { get; set; }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using PunchCard.Models;
 using PunchCard.Services;
 
 // ReSharper disable InconsistentNaming
@@ -32,7 +31,7 @@ namespace PunchCard.Controllers
                 server_name = Environment.MachineName,
                 location = AppDomain.CurrentDomain.BaseDirectory,
                 version = GetType().Assembly.GetName().Version.ToString(),
-                punch_responses = _hrResourceService.GetAllPunchResponse(),
+                punch_responses = _hrResourceService.CachedPunchTime,
                 last_timer_time = _hrResourceService.LastTimerTime.ToString(CultureInfo.InvariantCulture),
                 work_time = _hrResourceService.WorkerTime.ToString(@"hh\:mm\:ss"),
                 card_time = await _hrResourceService.GetDayCardDetailAsync()
@@ -49,7 +48,7 @@ namespace PunchCard.Controllers
             public string server_name { get; set; }
             public string location { get; set; }
             public string version { get; set; }
-            public PunchCardResponse[] punch_responses { get; set; }
+            public DateTime[] punch_responses { get; set; }
             public string last_timer_time { get; set; }
             public string work_time { get; set; }
 

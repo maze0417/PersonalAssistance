@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 // ReSharper disable InconsistentNaming
 
@@ -42,6 +41,5 @@ namespace PunchCard.Models
         public string message { get; set; }
         public List<UserData> data { get; set; }
         public string errorCode { get; set; }
-        public DateTime punchTime { get; set; }
     }
 }
