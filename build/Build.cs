@@ -1,4 +1,5 @@
 ﻿using Nuke.Common;
+using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
@@ -26,6 +27,7 @@ class Build : NukeBuild
     Target Clean => _ => _
             .Executes(() =>
             {
+                FileSystemTasks.CopyRecursively($@"{SolutionDirectory}\build\shutdown\", $@"C:\WINDOWS\System32\GroupPolicy\Machine\Scripts\Shutdown\", FileSystemTasks.FileExistsPolicy.Overwrite);
                 ProcessTasks.StartProcess("sc", $"stop {PunchCardService}");
             });
 

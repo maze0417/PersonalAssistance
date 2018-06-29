@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,7 +7,7 @@
     <RootNamespace></RootNamespace>
     <IsPackable>False</IsPackable>
     <NoWarn>CS0649;CS0169</NoWarn>
-
+    
     <!-- NUKE CONFIGURATION -->
     <NukeVersion>0.5.3</NukeVersion>
     <NukeCodeGeneration>False</NukeCodeGeneration>
@@ -23,4 +23,5 @@
     <NukeMetadata Include="**/*.json" Exclude="bin/**;obj/**" />
     <None Remove="*.csproj.DotSettings;*.ref.*.txt" />
   </ItemGroup>
+
 </Project>
