@@ -45,7 +45,8 @@ namespace PunchCard
 
             if (isService)
             {
-                host.RunAsCustomService();
+                //host.RunAsCustomService();
+                host.RunAsService();
             }
             else
             {

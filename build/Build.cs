@@ -1,8 +1,6 @@
 ﻿using Nuke.Common;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
-using static Nuke.Common.IO.FileSystemTasks;
-using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
 class Build : NukeBuild
@@ -10,6 +8,7 @@ class Build : NukeBuild
     // Console application entry point. Also defines the default target.
     public static int Main() => Execute<Build>(x => x.CreateService);
 
+    const string PunchCardService = "PunchCardService";
     // Auto-injection fields:
 
     // [GitVersion] readonly GitVersion GitVersion;
@@ -25,11 +24,9 @@ class Build : NukeBuild
     // Provides access to the structure of the solution.
 
     Target Clean => _ => _
-            .OnlyWhen(() => false) // Disabled for safety.
             .Executes(() =>
             {
-                DeleteDirectories(GlobDirectories(SourceDirectory, "**/bin", "**/obj"));
-                EnsureCleanDirectory(OutputDirectory);
+                ProcessTasks.StartProcess("sc", $"stop {PunchCardService}");
             });
 
     Target Restore => _ => _
@@ -57,9 +54,9 @@ class Build : NukeBuild
         .DependsOn(Publish)
         .Executes(() =>
         {
-            //ProcessTasks.StartProcess($@"sc query {serviceName} binPath= ""{SolutionDirectory}\PunchCard\bin\Release\netcoreapp2.0\win10-x64\PunchCard.exe""");
             var path = $@"{SolutionDirectory}\PunchCard\bin\Release\netcoreapp2.0\win10-x64\PunchCard.exe";
-            ProcessTasks.StartProcess($"sc", $"create PunchCardService binPath= {path} ");
-            ProcessTasks.StartProcess($"sc", "start PunchCardService");
+
+            ProcessTasks.StartProcess("sc", $"create {PunchCardService} binPath= {path} ");
+            ProcessTasks.StartProcess("sc", $"start {PunchCardService}");
         });
 }
