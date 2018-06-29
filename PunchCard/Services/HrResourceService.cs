@@ -25,50 +25,19 @@ namespace PunchCard.Services
         DateTime LastTimerTime { get; set; }
 
         TimeSpan WorkerTime { get; set; }
+
+        void Init();
     }
 
     public class HrResourceService : BaseApiClient, IHrResourceService
     {
         private const string Url = "https://pro.104.com.tw/";
+        private readonly IHrResourceService _instance;
+        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
         public HrResourceService(ILogger<HrResourceService> logger) : base(logger)
         {
-            var instance = (IHrResourceService)this;
-            new Timer(s =>
-            {
-                instance.LastTimerTime = DateTime.Now;
-                var cachePunchTime = instance.CachedPunchTime;
-                if (cachePunchTime == null || cachePunchTime.Length == 0)
-                {
-                    var cardTime = instance.GetDayCardDetailAsync().GetAwaiter().GetResult();
-                    if (cardTime == null || cardTime.Count == 0)
-                    {
-                        instance.PunchCardAsync().GetAwaiter().GetResult();
-                        return;
-                    }
-
-                    instance.CachedPunchTime =
-                        cardTime.Select(a => DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} {a}")).ToArray();
-                }
-
-                if (cachePunchTime == null)
-                {
-                    return;
-                }
-                instance.WorkerTime = DateTime.Now - cachePunchTime.First();
-                if (cachePunchTime.Length >= 2)
-                {
-                    var total = cachePunchTime.Last() - cachePunchTime.First();
-                    if (total.Hours >= 9)
-                    {
-                        return;
-                    }
-                }
-                if (instance.WorkerTime.TotalHours >= 9)
-                {
-                    instance.PunchCardAsync().GetAwaiter().GetResult();
-                }
-            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1));
+            _instance = this;
         }
 
         Task<PunchCardResponse> IHrResourceService.PunchCardAsync()
@@ -118,5 +87,61 @@ namespace PunchCard.Services
 
         DateTime IHrResourceService.LastTimerTime { get; set; }
         TimeSpan IHrResourceService.WorkerTime { get; set; }
+
+        void IHrResourceService.Init()
+        {
+            Task.Factory.StartNew(MonitorApi, TaskCreationOptions.LongRunning);
+        }
+
+        private void MonitorApi()
+        {
+            while (!_cts.IsCancellationRequested)
+            {
+                _instance.LastTimerTime = DateTime.Now;
+                var cachePunchTime = _instance.CachedPunchTime;
+                if (cachePunchTime == null || cachePunchTime.Length == 0)
+                {
+                    var cardTime = _instance.GetDayCardDetailAsync().GetAwaiter().GetResult();
+
+                    if (cardTime.Count == 0)
+                    {
+                        _instance.PunchCardAsync().GetAwaiter().GetResult();
+                        continue;
+                    }
+                    _instance.CachedPunchTime =
+                        cardTime.Select(a => DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} {a}")).ToArray();
+                }
+
+                if (cachePunchTime == null)
+                {
+                    continue;
+                }
+                _instance.WorkerTime = DateTime.Now - cachePunchTime.First();
+                if (cachePunchTime.Length >= 2)
+                {
+                    var total = cachePunchTime.Last() - cachePunchTime.First();
+                    if (total.Hours >= 9)
+                    {
+                        continue;
+                    }
+                }
+                if (_instance.WorkerTime.TotalHours >= 9)
+                {
+                    _instance.PunchCardAsync().GetAwaiter().GetResult();
+                }
+                Delay(_cts.Token);
+            }
+        }
+
+        private static void Delay(CancellationToken token)
+        {
+            WaitASecondOrThrowIfCanceled(token);
+        }
+
+        private static void WaitASecondOrThrowIfCanceled(CancellationToken token)
+        {
+            token.WaitHandle.WaitOne(TimeSpan.FromMinutes(1));
+            token.ThrowIfCancellationRequested();
+        }
     }
 }

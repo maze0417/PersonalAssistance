@@ -24,7 +24,7 @@ namespace PunchCard
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime applicationLifetime)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -44,15 +44,8 @@ namespace PunchCard
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
-            var client = app.ApplicationServices.GetService<IHrResourceService>();
-            applicationLifetime.ApplicationStarted.Register(() =>
-            {
-                client.PunchCardAsync().GetAwaiter().GetResult();
-            });
-            applicationLifetime.ApplicationStopping.Register(() =>
-            {
-                client.PunchCardAsync().GetAwaiter().GetResult();
-            });
+            var hrResourceService = app.ApplicationServices.GetService<IHrResourceService>();
+            hrResourceService.Init();
         }
     }
 }
