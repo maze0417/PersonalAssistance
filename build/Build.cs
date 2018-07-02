@@ -27,7 +27,6 @@ class Build : NukeBuild
     Target Clean => _ => _
             .Executes(() =>
             {
-                FileSystemTasks.CopyRecursively($@"{SolutionDirectory}\build\shutdown\", $@"C:\WINDOWS\System32\GroupPolicy\Machine\Scripts\Shutdown\", FileSystemTasks.FileExistsPolicy.Overwrite);
                 ProcessTasks.StartProcess("sc", $"stop {PunchCardService}");
             });
 
@@ -61,4 +60,11 @@ class Build : NukeBuild
             ProcessTasks.StartProcess("sc", $"create {PunchCardService} binPath= {path} ");
             ProcessTasks.StartProcess("sc", $"start {PunchCardService}");
         });
+
+    Target SetupBat => _ => _
+       //.DependsOn(CreateService)
+       .Executes(() =>
+       {
+           FileSystemTasks.CopyRecursively($@"{SolutionDirectory}\build\Scripts\", $@"C:\Windows\System32\GroupPolicy\User\Scripts\", FileSystemTasks.FileExistsPolicy.Overwrite);
+       });
 }

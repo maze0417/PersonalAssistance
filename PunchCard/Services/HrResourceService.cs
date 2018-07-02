@@ -99,7 +99,8 @@ namespace PunchCard.Services
             {
                 _instance.LastTimerTime = DateTime.Now;
                 var cachePunchTime = _instance.CachedPunchTime;
-                if (cachePunchTime == null || cachePunchTime.Length == 0)
+
+                if (cachePunchTime == null || cachePunchTime.Length == 0 || (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1)
                 {
                     var cardTime = _instance.GetDayCardDetailAsync().GetAwaiter().GetResult();
 
