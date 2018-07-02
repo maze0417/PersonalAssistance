@@ -47,19 +47,7 @@ namespace PunchCardApp
         private void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
         {
             AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
-            switch (e.Reason)
-            {
-                case SessionEndReasons.Logoff:
-                    MessageBox.Show("User logging off");
-                    break;
-
-                case SessionEndReasons.SystemShutdown:
-                    MessageBox.Show("System is shutting down");
-                    break;
-            }
         }
-
-        public bool IsClosing { get; set; }
 
         private void MinizeIcon()
         {
@@ -83,8 +71,6 @@ namespace PunchCardApp
 
             _notifyIcon.Icon = new Icon(LoadIcon());
 
-            _notifyIcon.Click += ShowContextMenu;
-
             var contextMenu = new ContextMenu();
             AddAutoStartMenu(contextMenu);
             AddPunchCardMenu(contextMenu);
@@ -97,8 +83,6 @@ namespace PunchCardApp
         {
             var mi = typeof(NotifyIcon).GetMethod("ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic);
             mi?.Invoke(_notifyIcon, null);
-            if (IsClosing)
-                Close();
         }
 
         private void AddAutoStartMenu(Menu contextMenu)
@@ -160,16 +144,23 @@ namespace PunchCardApp
             contextMenu.MenuItems.Add(menuItem);
             menuItem.Index = 0;
             menuItem.Text = @"下班離開";
-            menuItem.Click += (sender, args) => { IsClosing = true; };
+            menuItem.Click += (sender, args) =>
+            {
+                Close();
+            };
         }
 
         private void OnClose(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            var result = MessageBox.Show("離開前要打卡嗎?", "Close", MessageBoxButton.YesNo);
+            if (result == MessageBoxResult.Yes)
+            {
+                AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
+            }
             _notifyIcon.Click -= ShowContextMenu;
             _notifyIcon.Visible = false;
             _notifyIcon.ContextMenu.Dispose();
             _notifyIcon.Dispose();
-            AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
         }
     }
 }
