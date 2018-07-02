@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 
 namespace PunchCardApp
 {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
-    public partial class App : Application
+    public partial class App
     {
+        private void Application_Exit(object sender, ExitEventArgs e)
+        {
+            MessageBox.Show("123", "Session Ending", MessageBoxButton.YesNo);
+        }
     }
 }

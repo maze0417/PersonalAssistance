@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -11,11 +13,14 @@ namespace Core.Clients
     public abstract class BaseApiClient
     {
         private const int TimeoutInSeconds = 15;
-        private static readonly HttpClient HttpClient = new HttpClient();
+
+        private readonly HttpClient _httpClient;
+
         private readonly ILogger _logger;
 
         protected BaseApiClient(ILogger logger)
         {
+            _httpClient = new HttpClient(new HttpClientHandler { UseCookies = false });
             _logger = logger;
         }
 
@@ -23,7 +28,7 @@ namespace Core.Clients
         {
             try
             {
-                using (var response = await HttpClient.SendAsync(request, new CancellationTokenSource(TimeSpan.FromSeconds(TimeoutInSeconds)).Token))
+                using (var response = await _httpClient.SendAsync(request, new CancellationTokenSource(TimeSpan.FromSeconds(TimeoutInSeconds)).Token))
                 {
                     var res = await response.Content.ReadAsStringAsync();
                     _logger.LogDebug(res);

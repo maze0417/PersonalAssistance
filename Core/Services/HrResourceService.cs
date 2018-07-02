@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 
 // ReSharper disable InconsistentNaming
 
-namespace PunchCard.Services
+namespace Core.Services
 {
     public interface IHrResourceService
     {
@@ -35,7 +35,7 @@ namespace PunchCard.Services
         private readonly IHrResourceService _instance;
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public HrResourceService(ILogger<HrResourceService> logger) : base(logger)
+        public HrResourceService(ILogger logger) : base(logger)
         {
             _instance = this;
         }
