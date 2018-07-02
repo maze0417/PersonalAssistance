@@ -22,9 +22,10 @@ namespace Core.Services
 
         DateTime[] CachedPunchTime { get; set; }
 
-        DateTime LastTimerTime { get; set; }
+        DateTime LastMonitTime { get; set; }
 
         TimeSpan WorkerTime { get; set; }
+        TimeSpan CacheInterval { get; set; }
 
         void Init();
     }
@@ -85,8 +86,9 @@ namespace Core.Services
 
         DateTime[] IHrResourceService.CachedPunchTime { get; set; }
 
-        DateTime IHrResourceService.LastTimerTime { get; set; }
+        DateTime IHrResourceService.LastMonitTime { get; set; }
         TimeSpan IHrResourceService.WorkerTime { get; set; }
+        TimeSpan IHrResourceService.CacheInterval { get; set; }
 
         void IHrResourceService.Init()
         {
@@ -97,7 +99,7 @@ namespace Core.Services
         {
             while (!_cts.IsCancellationRequested)
             {
-                _instance.LastTimerTime = DateTime.Now;
+                _instance.LastMonitTime = DateTime.Now;
                 var cachePunchTime = _instance.CachedPunchTime;
 
                 if (cachePunchTime == null || cachePunchTime.Length == 0 || (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1)
@@ -120,8 +122,8 @@ namespace Core.Services
                 _instance.WorkerTime = DateTime.Now - cachePunchTime.First();
                 if (cachePunchTime.Length >= 2)
                 {
-                    var total = cachePunchTime.Last() - cachePunchTime.First();
-                    if (total.Hours >= 9)
+                    _instance.CacheInterval = cachePunchTime.Last() - cachePunchTime.First();
+                    if (_instance.CacheInterval.Hours >= 9)
                     {
                         continue;
                     }

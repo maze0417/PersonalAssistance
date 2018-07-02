@@ -118,7 +118,8 @@ namespace PunchCardApp
                 AutoClosingMessageBox.Show($@"
 今日時間:{DateTime.Now:yyyy/MM/dd} {Environment.NewLine}
 工時:{_hrResourceService.WorkerTime:hh\:mm\:ss} {Environment.NewLine}
-最後回應:{_hrResourceService.LastTimerTime} {Environment.NewLine}
+Last Monitor:{_hrResourceService.LastMonitTime} {Environment.NewLine}
+Last Interval:{_hrResourceService.CacheInterval} {Environment.NewLine}
 打卡歷程:{Environment.NewLine}
 {string.Join(Environment.NewLine, res)}",
                     "提醒..30 sec後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
