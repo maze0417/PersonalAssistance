@@ -20,7 +20,7 @@ namespace PunchCardApp
             MessageBox.Show(text, caption, _mbb, _mbi);
         }
 
-        public static void Show(string text, string caption, MessageBoxButton mbb, MessageBoxImage mbi, int timeout = 5000)
+        public static void Show(string text, string caption, MessageBoxButton mbb, MessageBoxImage mbi, int timeout = 30000)
         {
             _instance = new AutoClosingMessageBox(text, caption, timeout);
             _mbb = mbb;

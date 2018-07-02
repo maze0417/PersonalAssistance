@@ -121,7 +121,7 @@ namespace PunchCardApp
 最後回應:{_hrResourceService.LastTimerTime} {Environment.NewLine}
 打卡歷程:{Environment.NewLine}
 {string.Join(Environment.NewLine, res)}",
-                    "提醒..五秒後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "提醒..30 sec後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
             };
         }
 
@@ -134,7 +134,7 @@ namespace PunchCardApp
             menuItem.Click += (sender, args) =>
             {
                 var res = AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
-                AutoClosingMessageBox.Show($"{res.message}", "提醒..五秒後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
+                AutoClosingMessageBox.Show($"{res.message}", "提醒..30 sec後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
             };
         }
 
