@@ -1,4 +1,7 @@
-﻿using System.Windows;
+﻿using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Windows;
 
 namespace PunchCardApp
 {
@@ -7,9 +10,5 @@ namespace PunchCardApp
     /// </summary>
     public partial class App
     {
-        private void Application_Exit(object sender, ExitEventArgs e)
-        {
-            MessageBox.Show("123", "Session Ending", MessageBoxButton.YesNo);
-        }
     }
 }

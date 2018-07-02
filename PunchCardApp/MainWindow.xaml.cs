@@ -8,6 +8,7 @@ using Core.Services;
 using Microsoft.Extensions.Logging.Debug;
 using Microsoft.Win32;
 using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
 
 namespace PunchCardApp
 {
@@ -38,8 +39,27 @@ namespace PunchCardApp
             _hrResourceService.Init();
             InitIcon();
             MinizeIcon();
+
             InitializeComponent();
+            SystemEvents.SessionEnding += SystemEvents_SessionEnding;
         }
+
+        private void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
+        {
+            AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
+            switch (e.Reason)
+            {
+                case SessionEndReasons.Logoff:
+                    MessageBox.Show("User logging off");
+                    break;
+
+                case SessionEndReasons.SystemShutdown:
+                    MessageBox.Show("System is shutting down");
+                    break;
+            }
+        }
+
+        public bool IsClosing { get; set; }
 
         private void MinizeIcon()
         {
@@ -77,6 +97,8 @@ namespace PunchCardApp
         {
             var mi = typeof(NotifyIcon).GetMethod("ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic);
             mi?.Invoke(_notifyIcon, null);
+            if (IsClosing)
+                Close();
         }
 
         private void AddAutoStartMenu(Menu contextMenu)
@@ -105,7 +127,6 @@ namespace PunchCardApp
             var menuItem = new MenuItem();
             contextMenu.MenuItems.Add(menuItem);
             menuItem.Index = 0;
-            menuItem.Checked = _registryKey?.GetValue(_curAssembly.GetName().Name) != null;
             menuItem.Text = @"今日打卡紀錄";
             menuItem.Click += (sender, args) =>
             {
@@ -125,8 +146,7 @@ namespace PunchCardApp
             var menuItem = new MenuItem();
             contextMenu.MenuItems.Add(menuItem);
             menuItem.Index = 0;
-            menuItem.Checked = _registryKey?.GetValue(_curAssembly.GetName().Name) != null;
-            menuItem.Text = @"打卡";
+            menuItem.Text = @"想打就打卡";
             menuItem.Click += (sender, args) =>
             {
                 var res = AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
@@ -139,18 +159,17 @@ namespace PunchCardApp
             var menuItem = new MenuItem();
             contextMenu.MenuItems.Add(menuItem);
             menuItem.Index = 0;
-            menuItem.Checked = _registryKey?.GetValue(_curAssembly.GetName().Name) != null;
-            menuItem.Text = @"離開";
-            menuItem.Click += (sender, args) =>
-            {
-                Close();
-            };
+            menuItem.Text = @"下班離開";
+            menuItem.Click += (sender, args) => { IsClosing = true; };
         }
 
         private void OnClose(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
             _notifyIcon.Click -= ShowContextMenu;
+            _notifyIcon.Visible = false;
+            _notifyIcon.ContextMenu.Dispose();
+            _notifyIcon.Dispose();
+            AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
         }
     }
 }
