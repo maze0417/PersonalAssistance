@@ -24,8 +24,8 @@ namespace PunchCardApp
 
         DateTime LastMonitTime { get; set; }
 
-        TimeSpan WorkerTime { get; set; }
-        TimeSpan CacheInterval { get; set; }
+        TimeSpan WorkerTime { get; }
+        TimeSpan CacheInterval { get; }
 
         void Init();
     }
@@ -89,54 +89,42 @@ namespace PunchCardApp
         DateTime[] IHrResourceService.CachedPunchTime { get; set; }
 
         DateTime IHrResourceService.LastMonitTime { get; set; }
-        TimeSpan IHrResourceService.WorkerTime { get; set; }
-        TimeSpan IHrResourceService.CacheInterval { get; set; }
+        TimeSpan IHrResourceService.WorkerTime => DateTime.Now - _instance.CachedPunchTime.First();
+
+        TimeSpan IHrResourceService.CacheInterval =>
+            _instance.CachedPunchTime.Last() - _instance.CachedPunchTime.First();
 
         void IHrResourceService.Init()
         {
-            Task.Factory.StartNew(MonitorApi, TaskCreationOptions.LongRunning);
+            Task.Factory.StartNew(MonitorApiAsync, TaskCreationOptions.LongRunning);
         }
 
-        private void MonitorApi()
+        private async Task MonitorApiAsync()
         {
             while (!_cts.IsCancellationRequested)
             {
                 _instance.LastMonitTime = DateTime.Now;
                 var cachePunchTime = _instance.CachedPunchTime;
 
-                if (cachePunchTime == null || cachePunchTime.Length == 0 || (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1)
+                if (cachePunchTime == null
+                    || cachePunchTime.Length == 0
+                    || (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1
+                    || cachePunchTime.Length < 2
+                    || _instance.CacheInterval.Hours < 9)
                 {
-                    SyncWithDayCardResult();
+                    await PunchCardIfNeededAndCacheDayCardAsync();
                 }
 
-                if (cachePunchTime == null)
-                {
-                    continue;
-                }
-                _instance.WorkerTime = DateTime.Now - cachePunchTime.First();
-                if (cachePunchTime.Length >= 2)
-                {
-                    _instance.CacheInterval = cachePunchTime.Last() - cachePunchTime.First();
-                    if (_instance.CacheInterval.Hours >= 9)
-                    {
-                        continue;
-                    }
-                }
-                if (_instance.WorkerTime.TotalHours >= 9)
-                {
-                    _instance.PunchCardAsync().GetAwaiter().GetResult();
-                    SyncWithDayCardResult();
-                }
                 Delay(_cts.Token);
             }
         }
 
-        private void SyncWithDayCardResult()
+        private async Task PunchCardIfNeededAndCacheDayCardAsync()
         {
-            var cardTime = _instance.GetDayCardDetailAsync().GetAwaiter().GetResult();
-            if (cardTime.Count == 0)
+            var cardTime = await _instance.GetDayCardDetailAsync();
+            if (cardTime.Count == 0 || _instance.WorkerTime.TotalHours >= 9)
             {
-                _instance.PunchCardAsync().GetAwaiter().GetResult();
+                await _instance.PunchCardAsync();
                 return;
             }
             _instance.CachedPunchTime =
