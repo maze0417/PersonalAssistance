@@ -35,13 +35,11 @@ namespace PunchCardApp
         private const string Url = "https://pro.104.com.tw/";
         private readonly IHrResourceService _instance;
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
-        private static string Cid => Properties.Settings.Default.cid;
-        private static string Pid => Properties.Settings.Default.pid;
-        private static string DeviceId => Properties.Settings.Default.deviceId;
-        private static string Cookie => Properties.Settings.Default.cookie;
+        private readonly IAppConfiguration _appConfiguration;
 
-        public HrResourceService(ILogger logger) : base(logger)
+        public HrResourceService(ILogger logger, IAppConfiguration appConfiguration) : base(logger)
         {
+            _appConfiguration = appConfiguration;
             _instance = this;
         }
 
@@ -49,9 +47,9 @@ namespace PunchCardApp
         {
             var content = new GetPunchCardRequest
             {
-                cid = Cid,
-                pid = Pid,
-                deviceId = DeviceId,
+                cid = _appConfiguration.Cid,
+                pid = _appConfiguration.Pid,
+                deviceId = _appConfiguration.DeviceId,
                 macAddress = "e0-3f-49-94-a8-60"
             };
 
@@ -62,7 +60,7 @@ namespace PunchCardApp
 
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("cookie", Cookie);
+            request.Headers.Add("cookie", _appConfiguration.Cookie);
             return SendAsync<PunchCardResponse>(request);
         }
 
@@ -70,8 +68,8 @@ namespace PunchCardApp
         {
             var content = new GetDaCardDetailRequest
             {
-                cid = Cid,
-                pid = Pid,
+                cid = _appConfiguration.Cid,
+                pid = _appConfiguration.Pid,
                 date = DateTime.Now.ToString("yyyy/MM/dd")
             };
 
@@ -82,7 +80,7 @@ namespace PunchCardApp
 
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("cookie", Cookie);
+            request.Headers.Add("cookie", _appConfiguration.Cookie);
             var response = await SendAsync<GetDaCardDetailResponse>(request);
 
             return response.data.First().cardTime;

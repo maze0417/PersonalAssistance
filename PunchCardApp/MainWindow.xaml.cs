@@ -34,7 +34,7 @@ namespace PunchCardApp
             var lp = new DebugLoggerProvider();
             var logger = lp.CreateLogger("HrResourceService");
 
-            _hrResourceService = new HrResourceService(logger);
+            _hrResourceService = new HrResourceService(logger, new AppConfiguration());
             _hrResourceService.Init();
             InitIcon();
             MinizeIcon();
@@ -150,7 +150,7 @@ Last Interval:{_hrResourceService.CacheInterval} {Environment.NewLine}
             menuItem.Click += (sender, args) =>
             {
                 var res = AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
-                AutoClosingMessageBox.Show($"{res.message}", "提醒..30 sec後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
+                AutoClosingMessageBox.Show($"{res.message ?? res.errorCode ?? res.code}", "提醒..30 sec後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
             };
         }
 
