@@ -42,6 +42,22 @@ namespace PunchCardApp
 
             InitializeComponent();
             SystemEvents.SessionEnding += SystemEvents_SessionEnding;
+            SystemEvents.PowerModeChanged += OnPowerChange;
+        }
+
+        private void OnPowerChange(object sender, PowerModeChangedEventArgs e)
+        {
+            switch (e.Mode)
+            {
+                case PowerModes.Resume:
+                    break;
+
+                case PowerModes.Suspend:
+                    {
+                        AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
+                        break;
+                    }
+            }
         }
 
         private void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
