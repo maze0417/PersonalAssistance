@@ -62,7 +62,7 @@ namespace PunchCardApp
 
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("cookie", "BS2=undefined; CID=5fa91844ee7ee888174469f18dae49aa; PID=412885c0252a668c235d9dc87fbc70ad; proapp=1");
+            request.Headers.Add("cookie", Cookie);
             return SendAsync<PunchCardResponse>(request);
         }
 
@@ -70,8 +70,8 @@ namespace PunchCardApp
         {
             var content = new GetDaCardDetailRequest
             {
-                cid = "24726",
-                pid = "9356086",
+                cid = Cid,
+                pid = Pid,
                 date = DateTime.Now.ToString("yyyy/MM/dd")
             };
 
