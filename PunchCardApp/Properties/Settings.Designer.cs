@@ -22,5 +22,54 @@ namespace PunchCardApp.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("24726")]
+        public string cid {
+            get {
+                return ((string)(this["cid"]));
+            }
+            set {
+                this["cid"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("9356086")]
+        public string pid {
+            get {
+                return ((string)(this["pid"]));
+            }
+            set {
+                this["pid"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("f8cbcb51a49f6e87")]
+        public string deviceId {
+            get {
+                return ((string)(this["deviceId"]));
+            }
+            set {
+                this["deviceId"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("BS2=undefined; CID=5fa91844ee7ee888174469f18dae49aa; PID=412885c0252a668c235d9dc8" +
+            "7fbc70ad; proapp=1")]
+        public string cookie {
+            get {
+                return ((string)(this["cookie"]));
+            }
+            set {
+                this["cookie"] = value;
+            }
+        }
     }
 }

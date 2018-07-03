@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 
 // ReSharper disable InconsistentNaming
 
-namespace Core.Services
+namespace PunchCardApp
 {
     public interface IHrResourceService
     {
@@ -35,6 +35,10 @@ namespace Core.Services
         private const string Url = "https://pro.104.com.tw/";
         private readonly IHrResourceService _instance;
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+        private static string Cid => Properties.Settings.Default.cid;
+        private static string Pid => Properties.Settings.Default.pid;
+        private static string DeviceId => Properties.Settings.Default.deviceId;
+        private static string Cookie => Properties.Settings.Default.cookie;
 
         public HrResourceService(ILogger logger) : base(logger)
         {
@@ -45,9 +49,9 @@ namespace Core.Services
         {
             var content = new GetPunchCardRequest
             {
-                cid = "24726",
-                pid = "9356086",
-                deviceId = "f8cbcb51a49f6e87",
+                cid = Cid,
+                pid = Pid,
+                deviceId = DeviceId,
                 macAddress = "e0-3f-49-94-a8-60"
             };
 
@@ -78,7 +82,7 @@ namespace Core.Services
 
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("cookie", "BS2=undefined; CID=5fa91844ee7ee888174469f18dae49aa; PID=412885c0252a668c235d9dc87fbc70ad; proapp=1");
+            request.Headers.Add("cookie", Cookie);
             var response = await SendAsync<GetDaCardDetailResponse>(request);
 
             return response.data.First().cardTime;

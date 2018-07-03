@@ -4,7 +4,6 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
-using Core.Services;
 using Microsoft.Extensions.Logging.Debug;
 using Microsoft.Win32;
 using Application = System.Windows.Application;
