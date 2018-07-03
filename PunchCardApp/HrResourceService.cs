@@ -110,23 +110,34 @@ namespace PunchCardApp
                     || cachePunchTime.Length == 0
                     || (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1
                     || cachePunchTime.Length < 2
-                    || _instance.CacheInterval.Hours < 9)
+                    || _instance.CacheInterval.Hours < 9
+                    )
                 {
-                    await PunchCardIfNeededAndCacheDayCardAsync();
+                    await PunchCardWhenWorkerTimeExceededAsync();
+                    await PunchCardIfStartToWorkAndCacheDayCardAsync();
                 }
 
                 Delay(_cts.Token);
             }
         }
 
-        private async Task PunchCardIfNeededAndCacheDayCardAsync()
+        private async Task PunchCardWhenWorkerTimeExceededAsync()
+        {
+            if (_instance.WorkerTime.TotalHours >= 9)
+            {
+                await _instance.PunchCardAsync();
+            }
+        }
+
+        private async Task PunchCardIfStartToWorkAndCacheDayCardAsync()
         {
             var cardTime = await _instance.GetDayCardDetailAsync();
-            if (cardTime.Count == 0 || _instance.WorkerTime.TotalHours >= 9)
+            if (cardTime.Count == 0)
             {
                 await _instance.PunchCardAsync();
                 return;
             }
+
             _instance.CachedPunchTime =
                 cardTime.Select(a => DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} {a}")).ToArray();
         }
