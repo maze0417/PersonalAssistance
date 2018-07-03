@@ -106,15 +106,7 @@ namespace PunchCardApp
 
                 if (cachePunchTime == null || cachePunchTime.Length == 0 || (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1)
                 {
-                    var cardTime = _instance.GetDayCardDetailAsync().GetAwaiter().GetResult();
-
-                    if (cardTime.Count == 0)
-                    {
-                        _instance.PunchCardAsync().GetAwaiter().GetResult();
-                        continue;
-                    }
-                    _instance.CachedPunchTime =
-                        cardTime.Select(a => DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} {a}")).ToArray();
+                    SyncWithDayCardResult();
                 }
 
                 if (cachePunchTime == null)
@@ -133,9 +125,22 @@ namespace PunchCardApp
                 if (_instance.WorkerTime.TotalHours >= 9)
                 {
                     _instance.PunchCardAsync().GetAwaiter().GetResult();
+                    SyncWithDayCardResult();
                 }
                 Delay(_cts.Token);
             }
+        }
+
+        private void SyncWithDayCardResult()
+        {
+            var cardTime = _instance.GetDayCardDetailAsync().GetAwaiter().GetResult();
+            if (cardTime.Count == 0)
+            {
+                _instance.PunchCardAsync().GetAwaiter().GetResult();
+                return;
+            }
+            _instance.CachedPunchTime =
+                cardTime.Select(a => DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} {a}")).ToArray();
         }
 
         private static void Delay(CancellationToken token)
