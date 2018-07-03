@@ -89,9 +89,9 @@ namespace PunchCardApp
         DateTime[] IHrResourceService.CachedPunchTime { get; set; }
 
         DateTime IHrResourceService.LastMonitTime { get; set; }
-        TimeSpan IHrResourceService.WorkerTime => DateTime.Now - _instance.CachedPunchTime.First();
+        TimeSpan IHrResourceService.WorkerTime => _instance.CachedPunchTime == null ? TimeSpan.MinValue : DateTime.Now - _instance.CachedPunchTime.First();
 
-        TimeSpan IHrResourceService.CacheInterval =>
+        TimeSpan IHrResourceService.CacheInterval => _instance.CachedPunchTime == null ? TimeSpan.MinValue :
             _instance.CachedPunchTime.Last() - _instance.CachedPunchTime.First();
 
         void IHrResourceService.Init()
