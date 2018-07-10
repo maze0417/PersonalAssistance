@@ -26,6 +26,7 @@ namespace PunchCardApp
 
         TimeSpan WorkerTime { get; }
         TimeSpan CacheInterval { get; }
+        TaskStatus TaskStatus { get; set; }
 
         void Init();
     }
@@ -94,9 +95,12 @@ namespace PunchCardApp
         TimeSpan IHrResourceService.CacheInterval => _instance.CachedPunchTime == null ? TimeSpan.MinValue :
             _instance.CachedPunchTime.Last() - _instance.CachedPunchTime.First();
 
+        TaskStatus IHrResourceService.TaskStatus { get; set; }
+
         void IHrResourceService.Init()
         {
-            Task.Factory.StartNew(MonitorApiAsync, TaskCreationOptions.LongRunning);
+            var task = Task.Factory.StartNew(MonitorApiAsync, TaskCreationOptions.LongRunning);
+            _instance.TaskStatus = task.Status;
         }
 
         private async Task MonitorApiAsync()

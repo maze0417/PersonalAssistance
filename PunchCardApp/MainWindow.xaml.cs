@@ -4,7 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
-using Microsoft.Extensions.Logging.Debug;
+using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
@@ -28,13 +28,14 @@ namespace PunchCardApp
             ("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 
         private readonly IHrResourceService _hrResourceService;
+        private readonly ILoggerReader _loggerReader;
+        private readonly ILogger _logger;
 
         public MainWindow()
         {
-            var lp = new DebugLoggerProvider();
-            var logger = lp.CreateLogger("HrResourceService");
-
-            _hrResourceService = new HrResourceService(logger, new AppConfiguration());
+            _loggerReader = new Logger();
+            _logger = (ILogger)_loggerReader;
+            _hrResourceService = new HrResourceService(_logger, new AppConfiguration());
             _hrResourceService.Init();
             InitIcon();
             MinizeIcon();
@@ -46,10 +47,14 @@ namespace PunchCardApp
 
         private void OnPowerChange(object sender, PowerModeChangedEventArgs e)
         {
+            var status = _hrResourceService.TaskStatus;
+            _logger.LogTrace($"task status :{status} when power change to {e.Mode}");
             switch (e.Mode)
             {
                 case PowerModes.Resume:
-                    break;
+                    {
+                        break;
+                    }
 
                 case PowerModes.Suspend:
                     {
@@ -91,6 +96,7 @@ namespace PunchCardApp
             AddPunchCardMenu(contextMenu);
             AddPunchCardQueryMenu(contextMenu);
             AddCloseMenu(contextMenu);
+            AddLogMenu(contextMenu);
             _notifyIcon.ContextMenu = contextMenu;
         }
 
@@ -163,6 +169,18 @@ Last Interval:{_hrResourceService.CacheInterval} {Environment.NewLine}
             menuItem.Click += (sender, args) =>
             {
                 Close();
+            };
+        }
+
+        private void AddLogMenu(Menu contextMenu)
+        {
+            var menuItem = new MenuItem();
+            contextMenu.MenuItems.Add(menuItem);
+            menuItem.Index = 0;
+            menuItem.Text = @"Log";
+            menuItem.Click += (sender, args) =>
+            {
+                MessageBox.Show(_loggerReader.GetLoggedMessage(), "Log", MessageBoxButton.OK, MessageBoxImage.Warning);
             };
         }
 
