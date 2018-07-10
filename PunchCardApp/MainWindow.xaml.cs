@@ -48,7 +48,7 @@ namespace PunchCardApp
         private void OnPowerChange(object sender, PowerModeChangedEventArgs e)
         {
             var status = _hrResourceService.TaskStatus;
-            _logger.LogTrace($"task status :{status} when power change to {e.Mode}");
+            _logger.LogInformation($"task status :{status} when power change to {e.Mode}");
             switch (e.Mode)
             {
                 case PowerModes.Resume:
