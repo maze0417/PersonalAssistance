@@ -16,12 +16,7 @@ namespace PunchCardApp
     /// </summary>
     public partial class MainWindow
     {
-        private readonly NotifyIcon _notifyIcon = new NotifyIcon
-        {
-            BalloonTipText = @"已經最小化，點擊查看選項",
-            BalloonTipTitle = @"自動打卡系統.."
-        };
-
+        private readonly NotifyIcon _notifyIcon;
         private readonly Assembly _curAssembly = Assembly.GetExecutingAssembly();
 
         private readonly RegistryKey _registryKey = Registry.CurrentUser.OpenSubKey
@@ -33,13 +28,18 @@ namespace PunchCardApp
 
         public MainWindow()
         {
+            _notifyIcon = new NotifyIcon
+            {
+                BalloonTipText = @"已經最小化，點擊查看選項",
+                BalloonTipTitle = $@"自動打卡系統 v{_curAssembly.GetName().Version}"
+            };
+            _notifyIcon.Text = _curAssembly.GetName().Version.ToString();
             _loggerReader = new Logger();
             _logger = (ILogger)_loggerReader;
             _hrResourceService = new HrResourceService(_logger, new AppConfiguration());
             _hrResourceService.Init();
             InitIcon();
             MinizeIcon();
-
             InitializeComponent();
             SystemEvents.SessionEnding += SystemEvents_SessionEnding;
             SystemEvents.PowerModeChanged += OnPowerChange;
