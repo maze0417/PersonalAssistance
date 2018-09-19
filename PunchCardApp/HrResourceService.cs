@@ -37,10 +37,12 @@ namespace PunchCardApp
         private readonly IHrResourceService _instance;
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly IAppConfiguration _appConfiguration;
+        private readonly ILogger _logger;
 
         public HrResourceService(ILogger logger, IAppConfiguration appConfiguration) : base(logger)
         {
             _appConfiguration = appConfiguration;
+            _logger = logger;
             _instance = this;
         }
 
@@ -107,21 +109,30 @@ namespace PunchCardApp
         {
             while (!_cts.IsCancellationRequested)
             {
-                _instance.LastMonitTime = DateTime.Now;
-                var cachePunchTime = _instance.CachedPunchTime;
-
-                if (cachePunchTime == null
-                    || cachePunchTime.Length == 0
-                    || (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1
-                    || cachePunchTime.Length < 2
-                    || _instance.CacheInterval.Hours < 9
-                    )
+                try
                 {
-                    await PunchCardWhenWorkerTimeExceededAsync();
-                    await PunchCardIfStartToWorkAndCacheDayCardAsync();
-                }
+                    _instance.LastMonitTime = DateTime.Now;
+                    var cachePunchTime = _instance.CachedPunchTime;
 
-                Delay(_cts.Token);
+                    if (cachePunchTime == null
+                        || cachePunchTime.Length == 0
+                        || (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1
+                        || cachePunchTime.Length < 2
+                        || _instance.CacheInterval.Hours < 9
+                    )
+                    {
+                        await PunchCardWhenWorkerTimeExceededAsync();
+                        await PunchCardIfStartToWorkAndCacheDayCardAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
+                finally
+                {
+                    Delay(_cts.Token);
+                }
             }
         }
 
