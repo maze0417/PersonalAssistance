@@ -53,7 +53,7 @@ namespace PunchCardApp
                 cid = _appConfiguration.Cid,
                 pid = _appConfiguration.Pid,
                 deviceId = _appConfiguration.DeviceId,
-                macAddress = "e0-3f-49-94-a8-60"
+                macAddress = "b0-90-7e-a5-52-ae"
             };
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{Url}hrm/psc/apis/public/punchWifiCard.action")
