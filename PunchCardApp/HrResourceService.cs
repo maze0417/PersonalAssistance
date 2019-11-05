@@ -72,10 +72,12 @@ namespace PunchCardApp
                         {
                             await _punchCardService.PunchCardAsync();
                             _instance.CachedPunchTime.Add(DateTime.Now);
+                            _logger.LogInformation($"CachedPunchTime time : {DateTime.Now} ");
                         }
                         if (_instance.WorkerTime.TotalHours >= 9)
                         {
                             await _punchCardService.PunchCardAsync();
+                            _logger.LogInformation($"Worker hour completed :{DateTime.Now} ");
                         }
                     }
                 }
