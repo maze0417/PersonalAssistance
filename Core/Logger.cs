@@ -2,7 +2,7 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
 
-namespace PunchCardApp
+namespace Core
 {
     public interface ILoggerReader
     {

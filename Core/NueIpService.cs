@@ -4,14 +4,14 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Core;
 using Core.Clients;
 using Core.Models;
 using Core.Models.NueIp;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using PunchCardApp;
 
-namespace PunchCardApp
+namespace Core
 {
     public sealed class NueIpService : BaseApiClient, IPunchCardService
     {

@@ -3,13 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29418.71
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = ".build", "build\.build.csproj", "{3CBE39A4-EC94-45A3-84E5-324A8764BEF1}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1106017D-08B7-43D7-AC84-BCD3E16EB41E}"
-	ProjectSection(SolutionItems) = preProject
-		build.cmd = build.cmd
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PunchCardApp", "PunchCardApp\PunchCardApp.csproj", "{E50A3752-368F-4733-9B99-A6000814AA81}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "Core\Core.csproj", "{DAB6CFCD-8B53-4102-832E-85EC2BCF43C7}"
@@ -20,8 +13,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3CBE39A4-EC94-45A3-84E5-324A8764BEF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3CBE39A4-EC94-45A3-84E5-324A8764BEF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E50A3752-368F-4733-9B99-A6000814AA81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E50A3752-368F-4733-9B99-A6000814AA81}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E50A3752-368F-4733-9B99-A6000814AA81}.Release|Any CPU.ActiveCfg = Release|Any CPU

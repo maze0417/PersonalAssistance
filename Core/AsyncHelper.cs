@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PunchCardApp
+namespace Core
 {
     public static class AsyncHelper
     {
