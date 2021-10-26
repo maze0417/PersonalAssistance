@@ -35,8 +35,12 @@ namespace PunchCardApp
             };
             _notifyIcon.Text = _curAssembly.GetName().Version.ToString();
             _loggerReader = new Logger();
-            _logger = (ILogger)_loggerReader;
-            _hrResourceService = new HrResourceService(_logger, new JustAlertService());
+            _logger = (ILogger) _loggerReader;
+
+            //var service = new JustAlertService();
+            var service = new NueIpService(_logger, new AppConfiguration());
+
+            _hrResourceService = new HrResourceService(_logger, service);
             _hrResourceService.Init();
             InitIcon();
             MinizeIcon();
@@ -52,21 +56,22 @@ namespace PunchCardApp
             switch (e.Mode)
             {
                 case PowerModes.Resume:
-                    {
-                        break;
-                    }
+                {
+                    break;
+                }
 
                 case PowerModes.Suspend:
-                    {
-                        //AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
-                        break;
-                    }
+                {
+                    AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync(false));
+
+                    break;
+                }
             }
         }
 
         private void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
         {
-            //AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
+            AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync(false));
         }
 
         private void MinizeIcon()
@@ -93,7 +98,8 @@ namespace PunchCardApp
 
             var contextMenu = new ContextMenu();
             AddAutoStartMenu(contextMenu);
-            //AddPunchCardMenu(contextMenu);
+            AddPunchCardWorkMenu(contextMenu);
+
             //AddPunchCardQueryMenu(contextMenu);
             AddCloseMenu(contextMenu);
             AddLogMenu(contextMenu);
@@ -122,43 +128,46 @@ namespace PunchCardApp
                     menuItem.Checked = false;
                     return;
                 }
+
                 _registryKey?.SetValue(_curAssembly.GetName().Name, _curAssembly.Location);
                 menuItem.Checked = true;
             };
         }
 
-        //        private void AddPunchCardQueryMenu(Menu contextMenu)
-        //        {
-        //            var menuItem = new MenuItem();
-        //            contextMenu.MenuItems.Add(menuItem);
-        //            menuItem.Index = 0;
-        //            menuItem.Text = @"今日打卡紀錄";
-        //            menuItem.Click += (sender, args) =>
-        //            {
-        //                var res = AsyncHelper.RunSync(() => _hrResourceService.GetDayCardDetailAsync());
-        //                AutoClosingMessageBox.Show($@"
-        //今日時間:{DateTime.Now:yyyy/MM/dd} {Environment.NewLine}
-        //工時:{_hrResourceService.WorkerTime:hh\:mm\:ss} {Environment.NewLine}
-        //Last Monitor:{_hrResourceService.LastMonitTime} {Environment.NewLine}
-        //Last Interval:{_hrResourceService.CacheInterval} {Environment.NewLine}
-        //打卡歷程:{Environment.NewLine}
-        //{string.Join(Environment.NewLine, res)}",
-        //                    "提醒..30 sec後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
-        //            };
-        //        }
+        // private void AddPunchCardQueryMenu(Menu contextMenu)
+        // {
+        //     var menuItem = new MenuItem();
+        //     contextMenu.MenuItems.Add(menuItem);
+        //     menuItem.Index = 0;
+        //     menuItem.Text = @"今日打卡紀錄";
+        //     menuItem.Click += (sender, args) =>
+        //     {
+        //         var res = AsyncHelper.RunSync(() => _hrResourceService.GetDayCardDetailAsync());
+        //         AutoClosingMessageBox.Show($@"
+        // 今日時間:{DateTime.Now:yyyy/MM/dd} {Environment.NewLine}
+        // 工時:{_hrResourceService.WorkerTime:hh\:mm\:ss} {Environment.NewLine}
+        // Last Monitor:{_hrResourceService.LastMonitTime} {Environment.NewLine}
+        // Last Interval:{_hrResourceService.CacheInterval} {Environment.NewLine}
+        // 打卡歷程:{Environment.NewLine}
+        // {string.Join(Environment.NewLine, res)}",
+        //             "提醒..30 sec後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
+        //     };
+        // }
 
-        //private void AddPunchCardMenu(Menu contextMenu)
-        //{
-        //    var menuItem = new MenuItem();
-        //    contextMenu.MenuItems.Add(menuItem);
-        //    menuItem.Index = 0;
-        //    menuItem.Text = @"想打就打卡";
-        //    menuItem.Click += (sender, args) =>
-        //    {
-        //        var res = AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
-        //        AutoClosingMessageBox.Show($"{res.message ?? res.errorCode ?? res.code}", "提醒..30 sec後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
-        //    };
-        //}
+        private void AddPunchCardWorkMenu(Menu contextMenu)
+        {
+            var menuItem = new MenuItem();
+            contextMenu.MenuItems.Add(menuItem);
+            menuItem.Index = 0;
+            menuItem.Text = @"上班打卡";
+            menuItem.Click += (sender, args) =>
+            {
+                var res = AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync(false));
+                AutoClosingMessageBox.Show($"{res.message ?? res.errorCode ?? res.code}", "提醒..30 sec後關閉",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            };
+        }
+
 
         private void AddCloseMenu(Menu contextMenu)
         {
@@ -166,10 +175,7 @@ namespace PunchCardApp
             contextMenu.MenuItems.Add(menuItem);
             menuItem.Index = 0;
             menuItem.Text = @"下班離開";
-            menuItem.Click += (sender, args) =>
-            {
-                Close();
-            };
+            menuItem.Click += (sender, args) => { Close(); };
         }
 
         private void AddLogMenu(Menu contextMenu)
@@ -180,17 +186,21 @@ namespace PunchCardApp
             menuItem.Text = @"Log";
             menuItem.Click += (sender, args) =>
             {
-                MessageBox.Show(_loggerReader.GetLoggedMessage(), "Log", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(_loggerReader.GetLoggedMessage(), "Log", MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
             };
         }
 
         private void OnClose(object sender, System.ComponentModel.CancelEventArgs e)
         {
             var result = MessageBox.Show("離開前要打卡嗎?", "Close", MessageBoxButton.YesNo);
-            //if (result == MessageBoxResult.Yes)
-            //{
-            //    AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync());
-            //}
+            if (result == MessageBoxResult.Yes)
+            {
+                var res = AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync(true));
+                AutoClosingMessageBox.Show($"{res.message ?? res.errorCode ?? res.code}", "提醒..30 sec後關閉",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
             _notifyIcon.Click -= ShowContextMenu;
             _notifyIcon.Visible = false;
             _notifyIcon.ContextMenu.Dispose();

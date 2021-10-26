@@ -14,7 +14,9 @@ namespace PunchCardApp
 {
     public interface IPunchCardService
     {
-        Task<PunchCardResponse> PunchCardAsync();
+        Task<PunchCardResponse> PunchCardOnWorkAsync();
+
+        Task<PunchCardResponse> PunchCardOffWorkAsync();
 
         Task<List<string>> GetDayCardDetailAsync();
     }
@@ -23,10 +25,16 @@ namespace PunchCardApp
     {
         private static readonly Task<PunchCardResponse> EmptyTask = Task.FromResult(new PunchCardResponse());
 
-        public Task<PunchCardResponse> PunchCardAsync()
+        public Task<PunchCardResponse> PunchCardOnWorkAsync()
         {
-            AutoClosingMessageBox.Show($"現在時間{DateTime.Now},記得打卡!!!!", "提醒..30 sec後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
+            AutoClosingMessageBox.Show($"現在時間{DateTime.Now},記得打卡!!!!", "提醒..30 sec後關閉", MessageBoxButton.OK,
+                MessageBoxImage.Warning);
             return EmptyTask;
+        }
+
+        public async Task<PunchCardResponse> PunchCardOffWorkAsync()
+        {
+            throw new NotImplementedException();
         }
 
         public Task<List<string>> GetDayCardDetailAsync()
@@ -47,7 +55,7 @@ namespace PunchCardApp
             _logger = logger;
         }
 
-        Task<PunchCardResponse> IPunchCardService.PunchCardAsync()
+        Task<PunchCardResponse> IPunchCardService.PunchCardOnWorkAsync()
         {
             var content = new GetPunchCardRequest
             {
@@ -65,7 +73,12 @@ namespace PunchCardApp
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             request.Headers.Add("Accept", "application/json");
             request.Headers.Add("cookie", _appConfiguration.Cookie);
-            return SendAsync<PunchCardResponse>(request);
+            return SendWithJsonResponseAsync<PunchCardResponse>(request);
+        }
+
+        public async Task<PunchCardResponse> PunchCardOffWorkAsync()
+        {
+            throw new NotImplementedException();
         }
 
         async Task<List<string>> IPunchCardService.GetDayCardDetailAsync()
@@ -85,7 +98,7 @@ namespace PunchCardApp
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             request.Headers.Add("Accept", "application/json");
             request.Headers.Add("cookie", _appConfiguration.Cookie);
-            var response = await SendAsync<GetDaCardDetailResponse>(request);
+            var response = await SendWithJsonResponseAsync<GetDaCardDetailResponse>(request);
 
             return response.data.First().cardTime;
         }

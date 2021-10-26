@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Core.Clients;
+using Core.Models;
 using Microsoft.Extensions.Logging;
 
 // ReSharper disable InconsistentNaming
@@ -20,6 +21,7 @@ namespace PunchCardApp
         TimeSpan CacheInterval { get; }
         TaskStatus TaskStatus { get; set; }
 
+        Task<PunchCardResponse> PunchCardAsync(bool isOffWork);
         void Init();
     }
 
@@ -40,12 +42,22 @@ namespace PunchCardApp
         IList<DateTime> IHrResourceService.CachedPunchTime { get; set; } = new List<DateTime>();
 
         DateTime IHrResourceService.LastMonitTime { get; set; }
-        TimeSpan IHrResourceService.WorkerTime => _instance.CachedPunchTime.Count == 0 ? TimeSpan.MinValue : DateTime.Now - _instance.CachedPunchTime.First();
 
-        TimeSpan IHrResourceService.CacheInterval => _instance.CachedPunchTime.Count == 0 ? TimeSpan.MinValue :
-            _instance.CachedPunchTime.Last() - _instance.CachedPunchTime.First();
+        TimeSpan IHrResourceService.WorkerTime => _instance.CachedPunchTime.Count == 0
+            ? TimeSpan.MinValue
+            : DateTime.Now - _instance.CachedPunchTime.First();
+
+        TimeSpan IHrResourceService.CacheInterval => _instance.CachedPunchTime.Count == 0
+            ? TimeSpan.MinValue
+            : _instance.CachedPunchTime.Last() - _instance.CachedPunchTime.First();
 
         TaskStatus IHrResourceService.TaskStatus { get; set; }
+
+
+        Task<PunchCardResponse> IHrResourceService.PunchCardAsync(bool isOffWork)
+        {
+            return isOffWork ? _punchCardService.PunchCardOffWorkAsync() : _punchCardService.PunchCardOnWorkAsync();
+        }
 
         void IHrResourceService.Init()
         {
@@ -70,13 +82,14 @@ namespace PunchCardApp
                     {
                         if (_instance.CachedPunchTime.Count == 0)
                         {
-                            await _punchCardService.PunchCardAsync();
+                            await _punchCardService.PunchCardOnWorkAsync();
                             _instance.CachedPunchTime.Add(DateTime.Now);
                             _logger.LogInformation($"CachedPunchTime time : {DateTime.Now} ");
                         }
+
                         if (_instance.WorkerTime.TotalHours >= 9)
                         {
-                            await _punchCardService.PunchCardAsync();
+                            await _punchCardService.PunchCardOnWorkAsync();
                             _logger.LogInformation($"Worker hour completed :{DateTime.Now} ");
                         }
                     }

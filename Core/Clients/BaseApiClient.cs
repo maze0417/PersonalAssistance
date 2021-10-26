@@ -18,15 +18,21 @@ namespace Core.Clients
 
         protected BaseApiClient(ILogger logger)
         {
-            _httpClient = new HttpClient(new HttpClientHandler { UseCookies = false });
+            _httpClient = new HttpClient(new HttpClientHandler
+            {
+                AllowAutoRedirect = true,
+                UseCookies = true,
+                CookieContainer = new CookieContainer()
+            });
             _logger = logger;
         }
 
-        protected async Task<TResponse> SendAsync<TResponse>(HttpRequestMessage request)
+        protected async Task<TResponse> SendWithJsonResponseAsync<TResponse>(HttpRequestMessage request)
         {
             try
             {
-                using (var response = await _httpClient.SendAsync(request, new CancellationTokenSource(TimeSpan.FromSeconds(TimeoutInSeconds)).Token))
+                using (var response = await _httpClient.SendAsync(request,
+                    new CancellationTokenSource(TimeSpan.FromSeconds(TimeoutInSeconds)).Token))
                 {
                     var res = await response.Content.ReadAsStringAsync();
                     _logger.LogDebug(res);
@@ -37,6 +43,31 @@ namespace Core.Clients
                     }
 
                     return JsonConvert.DeserializeObject<TResponse>(res);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return default;
+            }
+        }
+
+        protected async Task<string> SendAsync(HttpRequestMessage request)
+        {
+            try
+            {
+                using (var response = await _httpClient.SendAsync(request,
+                    new CancellationTokenSource(TimeSpan.FromSeconds(TimeoutInSeconds)).Token))
+                {
+                    var res = await response.Content.ReadAsStringAsync();
+                    _logger.LogDebug(res);
+                    if (response.StatusCode != HttpStatusCode.OK)
+                    {
+                        _logger.LogWarning(res);
+                        return default;
+                    }
+
+                    return res;
                 }
             }
             catch (Exception ex)
