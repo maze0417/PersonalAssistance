@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Core.Clients;
@@ -13,12 +11,14 @@ namespace Core
 {
     public interface IHrResourceService
     {
-        IList<DateTime> CachedPunchTime { get; set; }
+        DateTime? PunchedInTime { get; set; }
+
+        DateTime? PunchedOutTime { get; set; }
 
         DateTime LastMonitTime { get; set; }
 
-        TimeSpan WorkerTime { get; }
-        TimeSpan CacheInterval { get; }
+        TimeSpan TotalWorkTime { get; }
+
         TaskStatus TaskStatus { get; set; }
 
         Task<PunchCardResponse> PunchCardAsync(bool isOffWork);
@@ -39,17 +39,15 @@ namespace Core
             _instance = this;
         }
 
-        IList<DateTime> IHrResourceService.CachedPunchTime { get; set; } = new List<DateTime>();
+        DateTime? IHrResourceService.PunchedInTime { get; set; }
+        DateTime? IHrResourceService.PunchedOutTime { get; set; }
 
         DateTime IHrResourceService.LastMonitTime { get; set; }
 
-        TimeSpan IHrResourceService.WorkerTime => _instance.CachedPunchTime.Count == 0
-            ? TimeSpan.MinValue
-            : DateTime.Now - _instance.CachedPunchTime.First();
+        TimeSpan IHrResourceService.TotalWorkTime => _instance.PunchedInTime.HasValue
+            ? DateTime.Now - _instance.PunchedInTime.Value
+            : TimeSpan.MinValue;
 
-        TimeSpan IHrResourceService.CacheInterval => _instance.CachedPunchTime.Count == 0
-            ? TimeSpan.MinValue
-            : _instance.CachedPunchTime.Last() - _instance.CachedPunchTime.First();
 
         TaskStatus IHrResourceService.TaskStatus { get; set; }
 
@@ -79,47 +77,45 @@ namespace Core
                 try
                 {
                     _instance.LastMonitTime = DateTime.Now;
-                    var cachePunchTime = _instance.CachedPunchTime;
+                    var isCompletedPunched = _instance.PunchedInTime.HasValue && _instance.PunchedOutTime.HasValue;
+                    var hour = DateTime.Now.Hour;
+                    var isWorkTime = hour >= 9 && hour < 19;
+                    var isOffWorkTime = hour >= 19;
 
-                    if (cachePunchTime.Count > 0)
+                    if (isCompletedPunched)
                     {
-                        var moreThanOneDay = (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1;
+                        var moreThanOneDay = DateTime.Now.Day - _instance.PunchedOutTime.Value.Day >= 1;
                         if (moreThanOneDay)
                         {
-                            cachePunchTime.Clear();
+                            _instance.PunchedInTime = null;
+                            _instance.PunchedOutTime = null;
                             continue;
                         }
                     }
 
-
-                    if (cachePunchTime.Count == 0
-                        || cachePunchTime.Count < 2
-                        || _instance.CacheInterval.Hours < 9
-                    )
+                    if (!_instance.PunchedInTime.HasValue && isWorkTime)
                     {
-                        if (_instance.WorkerTime.TotalHours >= 9)
+                        await _punchCardService.PunchCardOnWorkAsync();
+                        _instance.PunchedInTime = DateTime.Now;
+                        _logger.LogInformation($"九點到了，打卡上班 :{DateTime.Now} ");
+                        continue;
+                    }
+
+                    if (!_instance.PunchedOutTime.HasValue)
+                    {
+                        if (_instance.TotalWorkTime.TotalHours >= 9)
                         {
                             await _punchCardService.PunchCardOffWorkAsync();
-                            _instance.CachedPunchTime.Add(DateTime.Now);
+                            _instance.PunchedOutTime = DateTime.Now;
                             _logger.LogInformation($"工時九小時到了，打卡下班 :{DateTime.Now} ");
                             continue;
                         }
 
-                        var hour = DateTime.Now.Hour;
-                        if (hour >= 9 && hour < 18)
-                        {
-                            await _punchCardService.PunchCardOnWorkAsync();
-                            _instance.CachedPunchTime.Add(DateTime.Now);
-                            _logger.LogInformation($"九點到了...打卡上班 時間 : {DateTime.Now} ");
-                            continue;
-                        }
-
-                        if (hour >= 18)
+                        if (isOffWorkTime)
                         {
                             await _punchCardService.PunchCardOffWorkAsync();
-                            _instance.CachedPunchTime.Add(DateTime.Now);
-                            _logger.LogInformation($"六點到了...打卡下班 時間 : {DateTime.Now} ");
-                            continue;
+                            _instance.PunchedOutTime = DateTime.Now;
+                            _logger.LogInformation($"七點到了...打卡下班 時間 : {DateTime.Now} ");
                         }
                     }
                 }
