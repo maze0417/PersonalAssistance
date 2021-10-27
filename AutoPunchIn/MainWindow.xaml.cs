@@ -117,7 +117,7 @@ namespace AutoPunchIn
 
             contextMenu.Items.Add(menuItem);
             menuItem.IsChecked = _registryKey?.GetValue(_curAssembly.GetName().Name) != null;
-            menuItem.Header = @"自動開啟";
+            menuItem.Header = @"開機時啟動";
             menuItem.Click += (sender, args) =>
             {
                 if (menuItem.IsChecked)

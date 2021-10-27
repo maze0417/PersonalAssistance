@@ -28,7 +28,7 @@ namespace AutoPunchIn
             services.AddSingleton(provider => (ILoggerReader) provider.GetService<ILogger>());
             services.AddSingleton<IAppConfiguration, AppConfiguration>();
             services.AddSingleton<IHrResourceService, HrResourceService>();
-            services.AddSingleton<IPunchCardService, JustAlertService>();
+            services.AddSingleton<IPunchCardService, NueIpService>();
             services.AddSingleton<MainWindow>();
         }
 
