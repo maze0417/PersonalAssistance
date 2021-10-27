@@ -12,15 +12,6 @@ using PunchCardApp;
 
 namespace Core
 {
-    public interface IPunchCardService
-    {
-        Task<PunchCardResponse> PunchCardOnWorkAsync();
-
-        Task<PunchCardResponse> PunchCardOffWorkAsync();
-
-        Task<List<string>> GetDayCardDetailAsync();
-    }
-
     public class Pro104Service : BaseApiClient, IPunchCardService
     {
         private readonly IAppConfiguration _appConfiguration;

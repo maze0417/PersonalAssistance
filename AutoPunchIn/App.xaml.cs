@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -30,17 +24,17 @@ namespace AutoPunchIn
 
         private void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<ILoggerReader, Logger>();
             services.AddSingleton<ILogger, Logger>();
+            services.AddSingleton(provider => (ILoggerReader) provider.GetService<ILogger>());
             services.AddSingleton<IAppConfiguration, AppConfiguration>();
             services.AddSingleton<IHrResourceService, HrResourceService>();
-            services.AddSingleton<IPunchCardService, NueIpService>();
+            services.AddSingleton<IPunchCardService, JustAlertService>();
             services.AddSingleton<MainWindow>();
         }
 
         private void App_OnStartup(object sender, StartupEventArgs e)
         {
-            var mainWindow = _serviceProvider.GetService<MainWindow>();
+            _serviceProvider.GetService<MainWindow>();
         }
     }
 }

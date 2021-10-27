@@ -1,13 +1,9 @@
-﻿using System;
-using System.Drawing;
-using System.IO;
+﻿using System.Drawing;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using Core;
 using Hardcodet.Wpf.TaskbarNotification;
-using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 using PunchCardApp;
 
@@ -26,38 +22,34 @@ namespace AutoPunchIn
 
         private readonly IHrResourceService _hrResourceService;
         private readonly ILoggerReader _loggerReader;
-        private readonly ILogger _logger;
+        private readonly IAppConfiguration _appConfiguration;
 
-        public MainWindow(IHrResourceService hrResourceService, ILoggerReader loggerReader, ILogger logger)
+
+        public MainWindow(IHrResourceService hrResourceService, ILoggerReader loggerReader,
+            IAppConfiguration appConfiguration)
         {
             _hrResourceService = hrResourceService;
             _loggerReader = loggerReader;
-            _logger = logger;
+            _appConfiguration = appConfiguration;
             _hrResourceService.Init();
 
 
             _notifyIcon = new TaskbarIcon();
             InitIcon();
-            MinimizeIcon();
             InitializeComponent();
         }
 
-        private void MinimizeIcon()
-        {
-            WindowState = WindowState.Minimized;
-            //Hide();
-            _notifyIcon.Visibility = Visibility.Visible;
-            var icon = new Icon("timer.ico");
-            _notifyIcon.Icon = icon;
-            //_notifyIcon.ToolTipText = @"已經最小化，點擊查看選項";
-            //_notifyIcon.ToolTip = $@"自動打卡系統 v{_curAssembly.GetName().Version}";
-            _notifyIcon.ShowBalloonTip($@"自動打卡系統 v{_curAssembly.GetName().Version}",
-                @"已經最小化，點擊查看選項", icon);
-        }
 
         private void InitIcon()
         {
             var contextMenu = new ContextMenu();
+            var icon = new Icon("timer.ico");
+
+            var title = $@"{_curAssembly.GetName().Name} v{_curAssembly.GetName().Version}";
+            _notifyIcon.Icon = icon;
+            _notifyIcon.ToolTipText = title;
+            _notifyIcon.ShowBalloonTip(title, "已經最小化", BalloonIcon.Info);
+            AddInfoMenu(contextMenu);
             AddAutoStartMenu(contextMenu);
             AddPunchCardWorkMenu(contextMenu);
             AddCloseMenu(contextMenu);
@@ -65,6 +57,25 @@ namespace AutoPunchIn
             _notifyIcon.ContextMenu = contextMenu;
         }
 
+        private void AddInfoMenu(ContextMenu contextMenu)
+        {
+            var menuItem = new MenuItem();
+            contextMenu.Items.Add(menuItem);
+            menuItem.Header = @"個人資訊";
+
+            menuItem.Click += (sender, args) =>
+            {
+                var msg = $@"帳號: {_appConfiguration.NueIpId}
+經度:{_appConfiguration.Lat}
+緯度:{_appConfiguration.Lng}
+上班打卡: {_hrResourceService.PunchedInTime}
+下班打卡: {_hrResourceService.PunchedOutTime}
+";
+
+                AutoClosingMessageBox.Show(msg, "打卡資訊", MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            };
+        }
 
         private void AddCloseMenu(ContextMenu contextMenu)
         {
@@ -79,9 +90,10 @@ namespace AutoPunchIn
             var menuItem = new MenuItem();
             contextMenu.Items.Add(menuItem);
             menuItem.Header = @"Log";
+
             menuItem.Click += (sender, args) =>
             {
-                MessageBox.Show(_loggerReader.GetLoggedMessage(), "Log", MessageBoxButton.OK,
+                AutoClosingMessageBox.Show(_loggerReader.GetLoggedMessage(), "Log", MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             };
         }

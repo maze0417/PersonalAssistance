@@ -13,12 +13,9 @@ namespace Core
     {
         private readonly StringBuilder _logMessage = new StringBuilder();
 
-        void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception,
+            Func<TState, Exception, string> formatter)
         {
-            if (logLevel < LogLevel.Information)
-            {
-                return;
-            }
             _logMessage.AppendLine($"{DateTime.Now} : {formatter(state, exception)}");
         }
 

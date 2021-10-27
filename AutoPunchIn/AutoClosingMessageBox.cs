@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Windows;
+using System.Windows.Interop;
 
 namespace AutoPunchIn
 {
@@ -17,12 +18,19 @@ namespace AutoPunchIn
             _caption = caption;
             _timeoutTimer = new Timer(OnTimerElapsed,
                 null, timeout, Timeout.Infinite);
-            MessageBox.Show(text, caption, _mbb, _mbi);
+
+            var tempWindow = new Window();
+            var helper = new WindowInteropHelper(tempWindow);
+            helper.EnsureHandle();
+            MessageBox.Show(tempWindow, text, caption, _mbb, _mbi);
+            tempWindow.Close();
         }
 
-        public static void Show(string text, string caption, MessageBoxButton mbb, MessageBoxImage mbi, int timeout = 30000)
+        public static void Show(string text, string caption, MessageBoxButton mbb, MessageBoxImage mbi,
+            int timeout = 30000)
         {
             _instance = new AutoClosingMessageBox(text, caption, timeout);
+
             _mbb = mbb;
             _mbi = mbi;
         }
