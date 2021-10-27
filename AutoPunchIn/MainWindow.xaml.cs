@@ -134,7 +134,8 @@ namespace AutoPunchIn
 
         private void OnClose(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            var result = MessageBox.Show("離開前要打卡嗎?", "Close", MessageBoxButton.YesNo);
+            var result =
+                AutoClosingMessageBox.Show("離開前要打卡嗎?", "Close", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result == MessageBoxResult.Yes)
             {
                 var res = AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync(true));

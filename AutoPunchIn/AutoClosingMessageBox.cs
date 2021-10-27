@@ -9,11 +9,11 @@ namespace AutoPunchIn
     {
         private readonly Timer _timeoutTimer;
         private readonly string _caption;
-        private static MessageBoxButton _mbb;
-        private static MessageBoxImage _mbi;
         private static AutoClosingMessageBox _instance;
+        private readonly MessageBoxResult _messageBoxResult;
 
-        private AutoClosingMessageBox(string text, string caption, int timeout)
+        private AutoClosingMessageBox(string text, string caption, MessageBoxButton mbb, MessageBoxImage mbi,
+            int timeout)
         {
             _caption = caption;
             _timeoutTimer = new Timer(OnTimerElapsed,
@@ -22,17 +22,16 @@ namespace AutoPunchIn
             var tempWindow = new Window();
             var helper = new WindowInteropHelper(tempWindow);
             helper.EnsureHandle();
-            MessageBox.Show(tempWindow, text, caption, _mbb, _mbi);
+            _messageBoxResult = MessageBox.Show(tempWindow, text, caption, mbb, mbi);
             tempWindow.Close();
         }
 
-        public static void Show(string text, string caption, MessageBoxButton mbb, MessageBoxImage mbi,
+        public static MessageBoxResult Show(string text, string caption, MessageBoxButton mbb, MessageBoxImage mbi,
             int timeout = 30000)
         {
-            _instance = new AutoClosingMessageBox(text, caption, timeout);
+            _instance = new AutoClosingMessageBox(text, caption, mbb, mbi, timeout);
 
-            _mbb = mbb;
-            _mbi = mbi;
+            return _instance._messageBoxResult;
         }
 
         private void OnTimerElapsed(object state)
