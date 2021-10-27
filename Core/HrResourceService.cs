@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Core;
 using Core.Clients;
 using Core.Models;
 using Microsoft.Extensions.Logging;
 
 // ReSharper disable InconsistentNaming
 
-namespace PunchCardApp
+namespace Core
 {
     public interface IHrResourceService
     {
@@ -57,7 +56,14 @@ namespace PunchCardApp
 
         Task<PunchCardResponse> IHrResourceService.PunchCardAsync(bool isOffWork)
         {
-            return isOffWork ? _punchCardService.PunchCardOffWorkAsync() : _punchCardService.PunchCardOnWorkAsync();
+            if (isOffWork)
+            {
+                _logger.LogInformation($"手動打卡下班 時間 : {DateTime.Now} ");
+                return _punchCardService.PunchCardOffWorkAsync();
+            }
+
+            _logger.LogInformation($"手動打卡上班 時間 : {DateTime.Now} ");
+            return _punchCardService.PunchCardOnWorkAsync();
         }
 
         void IHrResourceService.Init()
@@ -85,13 +91,13 @@ namespace PunchCardApp
                         {
                             await _punchCardService.PunchCardOnWorkAsync();
                             _instance.CachedPunchTime.Add(DateTime.Now);
-                            _logger.LogInformation($"CachedPunchTime time : {DateTime.Now} ");
+                            _logger.LogInformation($"程式開啟..自動打卡上班 時間 : {DateTime.Now} ");
                         }
 
                         if (_instance.WorkerTime.TotalHours >= 9)
                         {
                             await _punchCardService.PunchCardOnWorkAsync();
-                            _logger.LogInformation($"Worker hour completed :{DateTime.Now} ");
+                            _logger.LogInformation($"工時九小時到了，打卡下班 :{DateTime.Now} ");
                         }
                     }
                 }
