@@ -123,16 +123,12 @@ namespace Core
 
 
             return new FormUrlEncodedContent(dic);
-
-            string Encode(string data)
-            {
-                return string.IsNullOrEmpty(data) ? string.Empty : Uri.EscapeDataString(data).Replace("%20", "+");
-            }
         }
-        public static string StripHtmlTags(this string source)  
-        {  
-            return Regex.Replace(source, "<.*?>|&.*?;", string.Empty);  
-        }  
+
+        public static string StripHtmlTags(this string source)
+        {
+            return Regex.Replace(source, "<.*?>|&.*?;", string.Empty);
+        }
     }
 
     public class PropertyInformation

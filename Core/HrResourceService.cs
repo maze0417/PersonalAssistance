@@ -81,23 +81,45 @@ namespace Core
                     _instance.LastMonitTime = DateTime.Now;
                     var cachePunchTime = _instance.CachedPunchTime;
 
+                    if (cachePunchTime.Count > 0)
+                    {
+                        var moreThanOneDay = (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1;
+                        if (moreThanOneDay)
+                        {
+                            cachePunchTime.Clear();
+                            continue;
+                        }
+                    }
+
+
                     if (cachePunchTime.Count == 0
-                        || (DateTime.Now - cachePunchTime.Last()).TotalDays >= 1
                         || cachePunchTime.Count < 2
                         || _instance.CacheInterval.Hours < 9
                     )
                     {
-                        if (_instance.CachedPunchTime.Count == 0)
+                        if (_instance.WorkerTime.TotalHours >= 9)
+                        {
+                            await _punchCardService.PunchCardOffWorkAsync();
+                            _instance.CachedPunchTime.Add(DateTime.Now);
+                            _logger.LogInformation($"工時九小時到了，打卡下班 :{DateTime.Now} ");
+                            continue;
+                        }
+
+                        var hour = DateTime.Now.Hour;
+                        if (hour >= 9 && hour < 18)
                         {
                             await _punchCardService.PunchCardOnWorkAsync();
                             _instance.CachedPunchTime.Add(DateTime.Now);
-                            _logger.LogInformation($"程式開啟..自動打卡上班 時間 : {DateTime.Now} ");
+                            _logger.LogInformation($"九點到了...打卡上班 時間 : {DateTime.Now} ");
+                            continue;
                         }
 
-                        if (_instance.WorkerTime.TotalHours >= 9)
+                        if (hour >= 18)
                         {
-                            await _punchCardService.PunchCardOnWorkAsync();
-                            _logger.LogInformation($"工時九小時到了，打卡下班 :{DateTime.Now} ");
+                            await _punchCardService.PunchCardOffWorkAsync();
+                            _instance.CachedPunchTime.Add(DateTime.Now);
+                            _logger.LogInformation($"六點到了...打卡下班 時間 : {DateTime.Now} ");
+                            continue;
                         }
                     }
                 }
