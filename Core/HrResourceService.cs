@@ -15,6 +15,10 @@ namespace Core
 
         DateTime? PunchedOutTime { get; set; }
 
+        DateTime? NextPunchedInTime { get; set; }
+
+        DateTime? NextPunchedOutTime { get; set; }
+
         DateTime LastMonitTime { get; set; }
 
         TimeSpan TotalWorkTime { get; }
@@ -31,6 +35,7 @@ namespace Core
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly IPunchCardService _punchCardService;
         private readonly ILogger _logger;
+        private readonly Random rnd = new Random();
 
         public HrResourceService(ILogger logger, IPunchCardService punchCardService) : base(logger)
         {
@@ -42,6 +47,9 @@ namespace Core
         DateTime? IHrResourceService.PunchedInTime { get; set; }
         DateTime? IHrResourceService.PunchedOutTime { get; set; }
 
+        DateTime? IHrResourceService.NextPunchedInTime { get; set; }
+
+        DateTime? IHrResourceService.NextPunchedOutTime { get; set; }
         DateTime IHrResourceService.LastMonitTime { get; set; }
 
         TimeSpan IHrResourceService.TotalWorkTime => _instance.PunchedInTime.HasValue
@@ -76,11 +84,13 @@ namespace Core
             {
                 try
                 {
-                    _instance.LastMonitTime = DateTime.Now;
-                    var isCompletedPunched = _instance.PunchedInTime.HasValue && _instance.PunchedOutTime.HasValue;
+                    var now = DateTime.Now;
+                    _instance.LastMonitTime = now;
+                    var isCompletedPunched = _instance.PunchedOutTime.HasValue;
                     var hour = DateTime.Now.Hour;
                     var isWorkTime = hour >= 9 && hour < 19;
                     var isOffWorkTime = hour >= 19;
+
 
                     if (isCompletedPunched)
                     {
@@ -93,7 +103,24 @@ namespace Core
                         }
                     }
 
-                    if (!_instance.PunchedInTime.HasValue && isWorkTime)
+                    if (!_instance.NextPunchedInTime.HasValue)
+                    {
+                        var secs = GenerateRandomPunchSencods();
+                        var nextTime = now.Date.AddHours(now.Hour > 9 ? 24 + 9 : 9).AddSeconds(secs);
+                        _instance.NextPunchedInTime = nextTime;
+                        continue;
+                    }
+
+                    if (!_instance.NextPunchedOutTime.HasValue)
+                    {
+                        var secs = GenerateRandomPunchSencods();
+                        var nextTime = now.Date.AddHours(now.Hour >= 19 ? 24 + 19 : 19).AddSeconds(secs);
+                        _instance.NextPunchedOutTime = nextTime;
+                        continue;
+                    }
+
+
+                    if (!_instance.PunchedInTime.HasValue && isWorkTime && now > _instance.NextPunchedInTime)
                     {
                         await _punchCardService.PunchCardOnWorkAsync();
                         _instance.PunchedInTime = DateTime.Now;
@@ -101,7 +128,7 @@ namespace Core
                         continue;
                     }
 
-                    if (!_instance.PunchedOutTime.HasValue)
+                    if (!_instance.PunchedOutTime.HasValue && now > _instance.NextPunchedOutTime)
                     {
                         if (_instance.TotalWorkTime.TotalHours >= 9)
                         {
@@ -139,6 +166,11 @@ namespace Core
         {
             token.WaitHandle.WaitOne(TimeSpan.FromMinutes(1));
             token.ThrowIfCancellationRequested();
+        }
+
+        private int GenerateRandomPunchSencods()
+        {
+            return rnd.Next(0, 1800);
         }
     }
 }

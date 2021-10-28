@@ -93,7 +93,10 @@ namespace AutoPunchIn
 
             menuItem.Click += (sender, args) =>
             {
-                AutoClosingMessageBox.Show(_loggerReader.GetLoggedMessage(), "Log", MessageBoxButton.OK,
+                var msg = string.IsNullOrEmpty(_loggerReader.GetLoggedMessage())
+                    ? "無資訊"
+                    : _loggerReader.GetLoggedMessage();
+                AutoClosingMessageBox.Show(msg, "Log", MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             };
         }
