@@ -134,7 +134,8 @@ namespace AutoPunchIn
                     return;
                 }
 
-                _registryKey?.SetValue(_curAssembly.GetName().Name, _curAssembly.Location);
+                var exe = _curAssembly.Location.Replace(".dll", ".exe");
+                _registryKey?.SetValue(_curAssembly.GetName().Name, exe);
                 menuItem.IsChecked = true;
             };
         }

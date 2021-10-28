@@ -21,7 +21,6 @@ namespace Core
 
         DateTime LastMonitTime { get; set; }
 
-        TimeSpan TotalWorkTime { get; }
 
         TaskStatus TaskStatus { get; set; }
 
@@ -51,10 +50,6 @@ namespace Core
 
         DateTime? IHrResourceService.NextPunchedOutTime { get; set; }
         DateTime IHrResourceService.LastMonitTime { get; set; }
-
-        TimeSpan IHrResourceService.TotalWorkTime => _instance.PunchedInTime.HasValue
-            ? DateTime.Now - _instance.PunchedInTime.Value
-            : TimeSpan.MinValue;
 
 
         TaskStatus IHrResourceService.TaskStatus { get; set; }
@@ -89,7 +84,6 @@ namespace Core
                     var isCompletedPunched = _instance.PunchedOutTime.HasValue;
                     var hour = DateTime.Now.Hour;
                     var isNormalWorkTime = hour >= 9 && hour < 10;
-                    var isOffWorkTime = hour >= 18;
 
 
                     if (isCompletedPunched)
@@ -114,6 +108,7 @@ namespace Core
                     {
                         var secs = GenerateRandomPunchSeconds(false);
                         var nextTime = now.Date.AddHours(now.Hour >= 18 ? 24 + 18 : 18).AddSeconds(secs);
+
                         _instance.NextPunchedOutTime = nextTime;
                     }
 
@@ -128,20 +123,9 @@ namespace Core
 
                     if (!_instance.PunchedOutTime.HasValue && now >= _instance.NextPunchedOutTime)
                     {
-                        if (_instance.TotalWorkTime.TotalHours >= 8)
-                        {
-                            await _punchCardService.PunchCardOffWorkAsync();
-                            _instance.PunchedOutTime = DateTime.Now;
-                            _logger.LogInformation($"工時八小時到了，打卡下班 :{DateTime.Now} ");
-                            continue;
-                        }
-
-                        if (isOffWorkTime)
-                        {
-                            await _punchCardService.PunchCardOffWorkAsync();
-                            _instance.PunchedOutTime = DateTime.Now;
-                            _logger.LogInformation($"七點到了...打卡下班 時間 : {DateTime.Now} ");
-                        }
+                        await _punchCardService.PunchCardOffWorkAsync();
+                        _instance.PunchedOutTime = DateTime.Now;
+                        _logger.LogInformation($"七點到了...打卡下班 時間 : {DateTime.Now} ");
                     }
                 }
                 catch (Exception ex)
