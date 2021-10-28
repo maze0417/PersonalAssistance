@@ -68,8 +68,12 @@ namespace AutoPunchIn
                 var msg = $@"帳號: {_appConfiguration.NueIpId}
 經度:{_appConfiguration.Lat}
 緯度:{_appConfiguration.Lng}
+
 上班打卡: {_hrResourceService.PunchedInTime}
+下次上班打卡: {_hrResourceService.NextPunchedInTime}
+
 下班打卡: {_hrResourceService.PunchedOutTime}
+下次下班打卡: {_hrResourceService.NextPunchedOutTime}
 ";
 
                 AutoClosingMessageBox.Show(msg, "打卡資訊", MessageBoxButton.OK,

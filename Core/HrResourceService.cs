@@ -88,8 +88,8 @@ namespace Core
                     _instance.LastMonitTime = now;
                     var isCompletedPunched = _instance.PunchedOutTime.HasValue;
                     var hour = DateTime.Now.Hour;
-                    var isWorkTime = hour >= 9 && hour < 19;
-                    var isOffWorkTime = hour >= 19;
+                    var isNormalWorkTime = hour >= 9 && hour < 10;
+                    var isOffWorkTime = hour >= 18;
 
 
                     if (isCompletedPunched)
@@ -105,22 +105,20 @@ namespace Core
 
                     if (!_instance.NextPunchedInTime.HasValue)
                     {
-                        var secs = GenerateRandomPunchSencods();
+                        var secs = GenerateRandomPunchSecods(true);
                         var nextTime = now.Date.AddHours(now.Hour > 9 ? 24 + 9 : 9).AddSeconds(secs);
                         _instance.NextPunchedInTime = nextTime;
-                        continue;
                     }
 
                     if (!_instance.NextPunchedOutTime.HasValue)
                     {
-                        var secs = GenerateRandomPunchSencods();
-                        var nextTime = now.Date.AddHours(now.Hour >= 19 ? 24 + 19 : 19).AddSeconds(secs);
+                        var secs = GenerateRandomPunchSecods(false);
+                        var nextTime = now.Date.AddHours(now.Hour >= 18 ? 24 + 18 : 18).AddSeconds(secs);
                         _instance.NextPunchedOutTime = nextTime;
-                        continue;
                     }
 
 
-                    if (!_instance.PunchedInTime.HasValue && isWorkTime && now > _instance.NextPunchedInTime)
+                    if (!_instance.PunchedInTime.HasValue && isNormalWorkTime && now >= _instance.NextPunchedInTime)
                     {
                         await _punchCardService.PunchCardOnWorkAsync();
                         _instance.PunchedInTime = DateTime.Now;
@@ -128,13 +126,13 @@ namespace Core
                         continue;
                     }
 
-                    if (!_instance.PunchedOutTime.HasValue && now > _instance.NextPunchedOutTime)
+                    if (!_instance.PunchedOutTime.HasValue && now >= _instance.NextPunchedOutTime)
                     {
-                        if (_instance.TotalWorkTime.TotalHours >= 9)
+                        if (_instance.TotalWorkTime.TotalHours >= 8)
                         {
                             await _punchCardService.PunchCardOffWorkAsync();
                             _instance.PunchedOutTime = DateTime.Now;
-                            _logger.LogInformation($"工時九小時到了，打卡下班 :{DateTime.Now} ");
+                            _logger.LogInformation($"工時八小時到了，打卡下班 :{DateTime.Now} ");
                             continue;
                         }
 
@@ -168,9 +166,9 @@ namespace Core
             token.ThrowIfCancellationRequested();
         }
 
-        private int GenerateRandomPunchSencods()
+        private int GenerateRandomPunchSecods(bool isPunchIn)
         {
-            return rnd.Next(0, 1800);
+            return isPunchIn ? rnd.Next(0, 1800) : rnd.Next(1801, 3599);
         }
     }
 }
