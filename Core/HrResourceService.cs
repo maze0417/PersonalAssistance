@@ -105,14 +105,14 @@ namespace Core
 
                     if (!_instance.NextPunchedInTime.HasValue)
                     {
-                        var secs = GenerateRandomPunchSecods(true);
+                        var secs = GenerateRandomPunchSeconds(true);
                         var nextTime = now.Date.AddHours(now.Hour > 9 ? 24 + 9 : 9).AddSeconds(secs);
                         _instance.NextPunchedInTime = nextTime;
                     }
 
                     if (!_instance.NextPunchedOutTime.HasValue)
                     {
-                        var secs = GenerateRandomPunchSecods(false);
+                        var secs = GenerateRandomPunchSeconds(false);
                         var nextTime = now.Date.AddHours(now.Hour >= 18 ? 24 + 18 : 18).AddSeconds(secs);
                         _instance.NextPunchedOutTime = nextTime;
                     }
@@ -166,9 +166,9 @@ namespace Core
             token.ThrowIfCancellationRequested();
         }
 
-        private int GenerateRandomPunchSecods(bool isPunchIn)
+        private int GenerateRandomPunchSeconds(bool isPunchIn)
         {
-            return isPunchIn ? rnd.Next(0, 1800) : rnd.Next(1801, 3599);
+            return isPunchIn ? rnd.Next(0, 1800) : rnd.Next(1801, 3300);
         }
     }
 }
