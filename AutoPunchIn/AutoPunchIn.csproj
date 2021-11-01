@@ -4,22 +4,20 @@
         <OutputType>WinExe</OutputType>
         <TargetFramework>net5.0-windows</TargetFramework>
         <UseWPF>true</UseWPF>
-        <Version>1.0.0.1</Version>
-        <PackageVersion>1.0.0.2</PackageVersion>
-
+        <Version>1.0.0.2</Version>
     </PropertyGroup>
 
     <ItemGroup>
-        <Resource Include="timer.ico" />
+        <Resource Include="timer.ico"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Core\Core.csproj" />
+        <ProjectReference Include="..\Core\Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
+        <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2"/>
     </ItemGroup>
 
 </Project>
