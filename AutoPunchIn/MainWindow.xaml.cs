@@ -1,4 +1,6 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
+using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -42,8 +44,18 @@ namespace AutoPunchIn
 
         private void InitIcon()
         {
+            Stream LoadIcon()
+            {
+                var streamResourceInfo = Application.GetResourceStream(
+                    new Uri(
+                        "pack://application:,,,/AutoPunchIn;component/timer.ico"));
+                if (streamResourceInfo == null)
+                    throw new Exception("could not load icon");
+                return streamResourceInfo.Stream;
+            }
+
             var contextMenu = new ContextMenu();
-            var icon = new Icon("timer.ico");
+            var icon = new Icon(LoadIcon());
 
             var title = $@"{_curAssembly.GetName().Name} v{_curAssembly.GetName().Version}";
             _notifyIcon.Icon = icon;
