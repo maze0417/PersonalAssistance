@@ -5,7 +5,7 @@ using Core.Models;
 
 namespace Core
 {
-    public class JustAlertService : IPunchCardService
+    public class VoidPunchService : IPunchCardService
     {
         private static readonly Task<PunchCardResponse> EmptyTask = Task.FromResult(new PunchCardResponse());
 

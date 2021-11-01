@@ -77,7 +77,7 @@ namespace Core
                 Content = content.ToFormRequest()
             };
 
-            var response = await SendAsync(request);
+            var response = await SendAsync(request, false);
 
             if (!response.Contains(_appConfiguration.NueIpId))
             {

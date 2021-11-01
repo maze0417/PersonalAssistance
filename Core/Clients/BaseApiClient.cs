@@ -52,7 +52,7 @@ namespace Core.Clients
             }
         }
 
-        protected async Task<string> SendAsync(HttpRequestMessage request)
+        protected async Task<string> SendAsync(HttpRequestMessage request, bool logResponse = true)
         {
             try
             {
@@ -60,10 +60,13 @@ namespace Core.Clients
                     new CancellationTokenSource(TimeSpan.FromSeconds(TimeoutInSeconds)).Token))
                 {
                     var res = await response.Content.ReadAsStringAsync();
-                    _logger.LogDebug(res);
+                    if (logResponse)
+                    {
+                        _logger.LogInformation($"url : {request.RequestUri}::{res}");
+                    }
+
                     if (response.StatusCode != HttpStatusCode.OK)
                     {
-                        _logger.LogWarning(res);
                         return default;
                     }
 
