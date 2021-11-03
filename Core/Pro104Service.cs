@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Core.Clients;
 using Core.Models;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using PunchCardApp;
 
 namespace Core
@@ -34,7 +34,7 @@ namespace Core
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{Url}hrm/psc/apis/public/punchWifiCard.action")
             {
-                Content = new StringContent(JsonConvert.SerializeObject(content))
+                Content = new StringContent(JsonSerializer.Serialize(content))
             };
 
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
@@ -59,7 +59,7 @@ namespace Core
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{Url}hrm/psc/apis/public/getDayCardDetail.action")
             {
-                Content = new StringContent(JsonConvert.SerializeObject(content))
+                Content = new StringContent(JsonSerializer.Serialize(content))
             };
 
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");

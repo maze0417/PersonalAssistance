@@ -5,10 +5,14 @@
         <TargetFramework>net5.0-windows</TargetFramework>
         <UseWPF>true</UseWPF>
         <Version>1.0.0.2</Version>
+        <DebugType>embedded</DebugType>
     </PropertyGroup>
 
     <ItemGroup>
         <Resource Include="timer.ico"/>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>

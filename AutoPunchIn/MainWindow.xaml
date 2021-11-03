@@ -7,4 +7,5 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" Closing="OnClose">
     <Grid />
+
 </Window>

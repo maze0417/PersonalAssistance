@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Core.Clients;
 using Core.Models;
 using Core.Models.NueIp;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using PunchCardApp;
 
 namespace Core
@@ -105,7 +105,7 @@ namespace Core
 
             var raw = await SendAsync(request);
 
-            var response = JsonConvert.DeserializeObject<TimeClockResponse>(raw);
+            var response = JsonSerializer.Deserialize<TimeClockResponse>(raw);
 
             if (response?.status != "success")
             {

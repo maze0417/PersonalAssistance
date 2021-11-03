@@ -9,12 +9,14 @@ using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Win32;
 using PunchCardApp;
 
+// ReSharper disable UnusedParameter.Local
+
 namespace AutoPunchIn
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
         private readonly TaskbarIcon _notifyIcon;
         private readonly Assembly _curAssembly = Assembly.GetExecutingAssembly();
@@ -66,6 +68,7 @@ namespace AutoPunchIn
             AddPunchCardWorkMenu(contextMenu);
             AddCloseMenu(contextMenu);
             AddLogMenu(contextMenu);
+
             _notifyIcon.ContextMenu = contextMenu;
         }
 
@@ -75,9 +78,11 @@ namespace AutoPunchIn
             contextMenu.Items.Add(menuItem);
             menuItem.Header = @"個人資訊";
 
-            menuItem.Click += (sender, args) =>
+            menuItem.Click += (_, _) =>
             {
+                var pwd = _appConfiguration.NueIpPwd.Length > 0 ? "*****" : "尚未填寫";
                 var msg = $@"帳號: {_appConfiguration.NueIpId}
+密碼: {pwd}
 經度:{_appConfiguration.Lat}
 緯度:{_appConfiguration.Lng}
 
@@ -117,6 +122,7 @@ namespace AutoPunchIn
             };
         }
 
+
         private void AddPunchCardWorkMenu(ContextMenu contextMenu)
         {
             var menuItem = new MenuItem();
@@ -141,12 +147,13 @@ namespace AutoPunchIn
             {
                 if (menuItem.IsChecked)
                 {
-                    _registryKey?.DeleteValue(_curAssembly.GetName().Name);
+                    _registryKey?.DeleteValue(_curAssembly.GetName().Name ??
+                                              throw new Exception("can not get registry key from assembly"));
                     menuItem.IsChecked = false;
                     return;
                 }
 
-                var exe = _curAssembly.Location.Replace(".dll", ".exe");
+                var exe = AppContext.BaseDirectory.Replace(".dll", ".exe");
                 _registryKey?.SetValue(_curAssembly.GetName().Name, exe);
                 menuItem.IsChecked = true;
             };

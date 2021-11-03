@@ -1,5 +1,9 @@
-﻿using System.Windows;
+﻿using System;
+using System.IO;
+using System.Text.Json;
+using System.Windows;
 using Core;
+using Core.Models.NueIp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PunchCardApp;
@@ -26,7 +30,21 @@ namespace AutoPunchIn
         {
             services.AddSingleton<ILogger, Logger>();
             services.AddSingleton(provider => (ILoggerReader) provider.GetService<ILogger>());
-            services.AddSingleton<IAppConfiguration, AppConfiguration>();
+
+
+            services.AddSingleton<IAppConfiguration>(s =>
+            {
+                if (!File.Exists("appSettings.json"))
+                {
+                    MessageBox.Show("miss appSettings.json", "Fatal Error");
+                    Shutdown(-1);
+                }
+
+                var content = File.ReadAllText("appSettings.json");
+
+                return new AppConfiguration(JsonSerializer.Deserialize<Setting>(content));
+            });
+
             services.AddSingleton<IHrResourceService, HrResourceService>();
             services.AddSingleton<IPunchCardService, NueIpService>();
             services.AddSingleton<MainWindow>();

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Core.Clients
 {
@@ -42,7 +42,7 @@ namespace Core.Clients
                         return default;
                     }
 
-                    return JsonConvert.DeserializeObject<TResponse>(res);
+                    return JsonSerializer.Deserialize<TResponse>(res);
                 }
             }
             catch (Exception ex)

@@ -1,26 +1,39 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
+using System.IO;
+using System.Text.Json;
+using System.Windows;
+using Core.Models.NueIp;
 using PunchCardApp;
 
 namespace AutoPunchIn
 {
-    public class AppConfiguration : IAppConfiguration
+    public sealed class AppConfiguration : IAppConfiguration
     {
-        string IAppConfiguration.Cid => ConfigurationManager.AppSettings["Cid"];
+        private readonly Setting _setting;
 
-        string IAppConfiguration.Pid => ConfigurationManager.AppSettings["Pid"];
+        public AppConfiguration(Setting setting)
+        {
+            _setting = setting;
+        }
 
-        string IAppConfiguration.DeviceId => ConfigurationManager.AppSettings["DeviceId"];
 
-        string IAppConfiguration.Cookie => ConfigurationManager.AppSettings["Cookie"];
+        string IAppConfiguration.Cid => throw new NotImplementedException();
 
-        string IAppConfiguration.NueIpCompany => ConfigurationManager.AppSettings["NueIpCompany"];
+        string IAppConfiguration.Pid => throw new NotImplementedException();
 
-        string IAppConfiguration.NueIpId => ConfigurationManager.AppSettings["NueIpId"];
+        string IAppConfiguration.DeviceId => throw new NotImplementedException();
 
-        string IAppConfiguration.NueIpPwd => ConfigurationManager.AppSettings["NueIpPwd"];
+        string IAppConfiguration.Cookie => throw new NotImplementedException();
 
-        string IAppConfiguration.Lat => ConfigurationManager.AppSettings["lat"];
+        string IAppConfiguration.NueIpCompany => _setting.NueIpCompany;
 
-        string IAppConfiguration.Lng => ConfigurationManager.AppSettings["lng"];
+        string IAppConfiguration.NueIpId => _setting?.NueIpId;
+
+        string IAppConfiguration.NueIpPwd => _setting?.NueIpPwd;
+
+        string IAppConfiguration.Lat => _setting?.Lat;
+
+        string IAppConfiguration.Lng => _setting?.Lng;
     }
 }
