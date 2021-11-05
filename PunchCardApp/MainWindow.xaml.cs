@@ -26,6 +26,7 @@ namespace PunchCardApp
         private readonly IHrResourceService _hrResourceService;
         private readonly ILoggerReader _loggerReader;
         private readonly ILogger _logger;
+        private readonly IAppConfiguration _appConfiguration;
 
         public MainWindow()
         {
@@ -37,9 +38,8 @@ namespace PunchCardApp
             _notifyIcon.Text = _curAssembly.GetName().Version.ToString();
             _loggerReader = new Logger();
             _logger = (ILogger) _loggerReader;
-
-            //var service = new JustAlertService();
-            var service = new NueIpService(_logger, new AppConfiguration());
+            _appConfiguration = new AppConfiguration();
+            var service = new NueIpService(_logger, _appConfiguration);
 
             _hrResourceService = new HrResourceService(_logger, service);
             _hrResourceService.Init();
@@ -98,13 +98,40 @@ namespace PunchCardApp
             _notifyIcon.Icon = new Icon(LoadIcon());
 
             var contextMenu = new ContextMenu();
+            AddInfoMenu(contextMenu);
             AddAutoStartMenu(contextMenu);
             AddPunchCardWorkMenu(contextMenu);
 
-            //AddPunchCardQueryMenu(contextMenu);
+
             AddCloseMenu(contextMenu);
             AddLogMenu(contextMenu);
             _notifyIcon.ContextMenu = contextMenu;
+        }
+
+        private void AddInfoMenu(ContextMenu contextMenu)
+        {
+            var menuItem = new MenuItem();
+            contextMenu.MenuItems.Add(menuItem);
+            menuItem.Text = @"個人資訊";
+
+            menuItem.Click += (b, c) =>
+            {
+                var pwd = _appConfiguration.NueIpPwd.Length > 0 ? "*****" : "尚未填寫";
+                var msg = $@"帳號: {_appConfiguration.NueIpId}
+密碼: {pwd}
+經度:{_appConfiguration.Lat}
+緯度:{_appConfiguration.Lng}
+
+上班打卡: {_hrResourceService.PunchedInTime}
+下次上班打卡: {_hrResourceService.NextPunchedInTime}
+
+下班打卡: {_hrResourceService.PunchedOutTime}
+下次下班打卡: {_hrResourceService.NextPunchedOutTime}
+";
+
+                AutoClosingMessageBox.Show(msg, "打卡資訊", MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            };
         }
 
         private void ShowContextMenu(object sender, EventArgs e)
@@ -118,7 +145,7 @@ namespace PunchCardApp
             var menuItem = new MenuItem();
 
             contextMenu.MenuItems.Add(menuItem);
-            menuItem.Index = 0;
+
             menuItem.Checked = _registryKey?.GetValue(_curAssembly.GetName().Name) != null;
             menuItem.Text = @"自動開啟";
             menuItem.Click += (sender, args) =>
@@ -135,31 +162,12 @@ namespace PunchCardApp
             };
         }
 
-        // private void AddPunchCardQueryMenu(Menu contextMenu)
-        // {
-        //     var menuItem = new MenuItem();
-        //     contextMenu.MenuItems.Add(menuItem);
-        //     menuItem.Index = 0;
-        //     menuItem.Text = @"今日打卡紀錄";
-        //     menuItem.Click += (sender, args) =>
-        //     {
-        //         var res = AsyncHelper.RunSync(() => _hrResourceService.GetDayCardDetailAsync());
-        //         AutoClosingMessageBox.Show($@"
-        // 今日時間:{DateTime.Now:yyyy/MM/dd} {Environment.NewLine}
-        // 工時:{_hrResourceService.WorkerTime:hh\:mm\:ss} {Environment.NewLine}
-        // Last Monitor:{_hrResourceService.LastMonitTime} {Environment.NewLine}
-        // Last Interval:{_hrResourceService.CacheInterval} {Environment.NewLine}
-        // 打卡歷程:{Environment.NewLine}
-        // {string.Join(Environment.NewLine, res)}",
-        //             "提醒..30 sec後關閉", MessageBoxButton.OK, MessageBoxImage.Warning);
-        //     };
-        // }
 
         private void AddPunchCardWorkMenu(Menu contextMenu)
         {
             var menuItem = new MenuItem();
             contextMenu.MenuItems.Add(menuItem);
-            menuItem.Index = 0;
+
             menuItem.Text = @"上班打卡";
             menuItem.Click += (sender, args) =>
             {
@@ -174,7 +182,7 @@ namespace PunchCardApp
         {
             var menuItem = new MenuItem();
             contextMenu.MenuItems.Add(menuItem);
-            menuItem.Index = 0;
+
             menuItem.Text = @"下班離開";
             menuItem.Click += (sender, args) => { Close(); };
         }
@@ -183,11 +191,14 @@ namespace PunchCardApp
         {
             var menuItem = new MenuItem();
             contextMenu.MenuItems.Add(menuItem);
-            menuItem.Index = 0;
+
             menuItem.Text = @"Log";
             menuItem.Click += (sender, args) =>
             {
-                MessageBox.Show(_loggerReader.GetLoggedMessage(), "Log", MessageBoxButton.OK,
+                var msg = string.IsNullOrEmpty(_loggerReader.GetLoggedMessage())
+                    ? "無資訊"
+                    : _loggerReader.GetLoggedMessage();
+                MessageBox.Show(msg, "Log", MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             };
         }
