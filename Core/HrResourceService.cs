@@ -69,64 +69,17 @@ namespace Core
 
         void IHrResourceService.Init()
         {
-            var task = Task.Factory.StartNew(MonitorApiAsync, TaskCreationOptions.LongRunning);
+            var task = Task.Factory.StartNew(() => MonitorApiAsync(DateTime.Now), TaskCreationOptions.LongRunning);
             _instance.TaskStatus = task.Status;
         }
 
-        private async Task MonitorApiAsync()
+        private async Task MonitorApiAsync(DateTime? nowTime = null)
         {
             while (!_cts.IsCancellationRequested)
             {
                 try
                 {
-                    var now = DateTime.Now;
-                    _instance.LastMonitTime = now;
-                    var isCompletedPunched = _instance.PunchedOutTime.HasValue;
-                    var hour = DateTime.Now.Hour;
-                    var isNormalWorkTime = hour >= 9 && hour < 10;
-
-
-                    if (isCompletedPunched)
-                    {
-                        var moreThanOneDay = DateTime.Now.Day - _instance.PunchedOutTime.Value.Day >= 1;
-                        if (moreThanOneDay)
-                        {
-                            _instance.PunchedInTime = null;
-                            _instance.PunchedOutTime = null;
-                            continue;
-                        }
-                    }
-
-                    if (!_instance.NextPunchedInTime.HasValue)
-                    {
-                        var secs = GenerateRandomPunchSeconds(true);
-                        var nextTime = now.Date.AddHours(now.Hour > 9 ? 24 + 9 : 9).AddSeconds(secs);
-                        _instance.NextPunchedInTime = nextTime;
-                    }
-
-                    if (!_instance.NextPunchedOutTime.HasValue)
-                    {
-                        var secs = GenerateRandomPunchSeconds(false);
-                        var nextTime = now.Date.AddHours(now.Hour >= 18 ? 24 + 18 : 18).AddSeconds(secs);
-
-                        _instance.NextPunchedOutTime = nextTime;
-                    }
-
-
-                    if (!_instance.PunchedInTime.HasValue && isNormalWorkTime && now >= _instance.NextPunchedInTime)
-                    {
-                        await _punchCardService.PunchCardOnWorkAsync();
-                        _instance.PunchedInTime = DateTime.Now;
-                        _logger.LogInformation($"九點到了，打卡上班 :{DateTime.Now} ");
-                        continue;
-                    }
-
-                    if (!_instance.PunchedOutTime.HasValue && now >= _instance.NextPunchedOutTime)
-                    {
-                        await _punchCardService.PunchCardOffWorkAsync();
-                        _instance.PunchedOutTime = DateTime.Now;
-                        _logger.LogInformation($"七點到了...打卡下班 時間 : {DateTime.Now} ");
-                    }
+                    await PunchCardIfNeedAsync(nowTime);
                 }
                 catch (Exception ex)
                 {
@@ -138,6 +91,89 @@ namespace Core
                 }
             }
         }
+
+        public async Task PunchCardIfNeedAsync(DateTime? nowTime)
+        {
+            var now = nowTime ?? DateTime.Now;
+
+
+            _instance.LastMonitTime = now;
+            var hour = now.Hour;
+            var isNormalWorkTime = hour == 9;
+            var isNormalOffTime = hour == 18;
+
+
+            SetNextPunchTime(now);
+
+
+            if (!_instance.PunchedInTime.HasValue && isNormalWorkTime && now >= _instance.NextPunchedInTime)
+            {
+                await _punchCardService.PunchCardOnWorkAsync();
+                _instance.PunchedInTime = now;
+                _logger.LogInformation($"九點到了，打卡上班 :{now} ");
+                return;
+            }
+
+            if (!_instance.PunchedOutTime.HasValue && isNormalOffTime && now >= _instance.NextPunchedOutTime)
+            {
+                await _punchCardService.PunchCardOffWorkAsync();
+                _instance.PunchedOutTime = now;
+                _logger.LogInformation($"七點到了...打卡下班 時間 : {now} ");
+            }
+        }
+
+
+        private void SetNextPunchTime(DateTime now)
+        {
+            if (!_instance.NextPunchedInTime.HasValue)
+            {
+                SetNextInTime();
+            }
+
+            if (!_instance.NextPunchedOutTime.HasValue)
+            {
+                SetNextOutTime();
+            }
+
+            var isToday =
+                _instance.NextPunchedInTime != null && (now - _instance.NextPunchedInTime.Value.Date).TotalDays >= 1;
+
+            if (!isToday)
+            {
+                return;
+            }
+
+            bool IsWeekend() => now.DayOfWeek == DayOfWeek.Saturday || now.DayOfWeek == DayOfWeek.Sunday;
+
+            var i = 1;
+            while (IsWeekend())
+            {
+                now = now.AddDays(i);
+            }
+
+            _instance.PunchedInTime = null;
+            _instance.PunchedOutTime = null;
+            SetNextInTime();
+            SetNextOutTime();
+            _logger.LogInformation($"跨天重算下次打卡時間:{now} ");
+
+            void SetNextOutTime()
+            {
+                var secs = GenerateRandomPunchSeconds(false);
+                var nextTime = now.Date.AddHours(now.Hour >= 18 ? 24 + 18 : 18).AddSeconds(secs);
+                _instance.NextPunchedOutTime = nextTime;
+                _logger.LogInformation($"下次下班打卡時間:{nextTime} ");
+            }
+
+            void SetNextInTime()
+            {
+                var secs = GenerateRandomPunchSeconds(true);
+                var nextTime = now.Date.AddHours(now.Hour > 9 ? 24 + 9 : 9).AddSeconds(secs);
+                _instance.NextPunchedInTime = nextTime;
+                _logger.LogInformation($"下次上班打卡時間:{nextTime} ");
+            }
+        }
+
 
         private static void Delay(CancellationToken token)
         {
