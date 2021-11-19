@@ -72,17 +72,17 @@ namespace Core
 
         void IHrResourceService.Init()
         {
-            var task = Task.Factory.StartNew(() => MonitorApiAsync(DateTime.Now), TaskCreationOptions.LongRunning);
+            var task = Task.Factory.StartNew(() => MonitorApiAsync(), TaskCreationOptions.LongRunning);
             _instance.TaskStatus = task.Status;
         }
 
-        private async Task MonitorApiAsync(DateTime? nowTime)
+        private async Task MonitorApiAsync()
         {
             while (!_cts.IsCancellationRequested)
             {
                 try
                 {
-                    await PunchCardIfNeedAsync(nowTime);
+                    await PunchCardIfNeedAsync(null);
                 }
                 catch (Exception ex)
                 {
