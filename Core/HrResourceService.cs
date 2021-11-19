@@ -36,6 +36,9 @@ namespace Core
         private readonly ILogger _logger;
         private readonly Random rnd = new Random();
 
+        private const int StartHour = 13;
+        private const int OffHour = 18;
+
         public HrResourceService(ILogger logger, IPunchCardService punchCardService) : base(logger)
         {
             _logger = logger;
@@ -73,7 +76,7 @@ namespace Core
             _instance.TaskStatus = task.Status;
         }
 
-        private async Task MonitorApiAsync(DateTime? nowTime = null)
+        private async Task MonitorApiAsync(DateTime? nowTime)
         {
             while (!_cts.IsCancellationRequested)
             {
@@ -99,8 +102,8 @@ namespace Core
 
             _instance.LastMonitTime = now;
             var hour = now.Hour;
-            var isNormalWorkTime = hour == 9;
-            var isNormalOffTime = hour == 18;
+            var isNormalWorkTime = hour == StartHour;
+            var isNormalOffTime = hour == OffHour;
 
 
             SetNextPunchTime(now);
@@ -135,10 +138,10 @@ namespace Core
                 SetNextOutTime();
             }
 
-            var isToday =
+            var isTomorrow =
                 _instance.NextPunchedInTime != null && (now - _instance.NextPunchedInTime.Value.Date).TotalDays >= 1;
 
-            if (!isToday)
+            if (!isTomorrow)
             {
                 return;
             }
@@ -160,7 +163,7 @@ namespace Core
             void SetNextOutTime()
             {
                 var secs = GenerateRandomPunchSeconds(false);
-                var nextTime = now.Date.AddHours(now.Hour >= 18 ? 24 + 18 : 18).AddSeconds(secs);
+                var nextTime = now.Date.AddHours(now.Hour >= OffHour ? 24 + OffHour : OffHour).AddSeconds(secs);
                 _instance.NextPunchedOutTime = nextTime;
                 _logger.LogInformation($"下次下班打卡時間:{nextTime} ");
             }
@@ -168,7 +171,7 @@ namespace Core
             void SetNextInTime()
             {
                 var secs = GenerateRandomPunchSeconds(true);
-                var nextTime = now.Date.AddHours(now.Hour > 9 ? 24 + 9 : 9).AddSeconds(secs);
+                var nextTime = now.Date.AddHours(now.Hour > StartHour ? 24 + StartHour : StartHour).AddSeconds(secs);
                 _instance.NextPunchedInTime = nextTime;
                 _logger.LogInformation($"下次上班打卡時間:{nextTime} ");
             }

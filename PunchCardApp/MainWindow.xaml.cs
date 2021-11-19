@@ -127,6 +127,8 @@ namespace PunchCardApp
 
 下班打卡: {_hrResourceService.PunchedOutTime}
 下次下班打卡: {_hrResourceService.NextPunchedOutTime}
+
+最後偵測時間: {_hrResourceService.LastMonitTime}
 ";
 
                 AutoClosingMessageBox.Show(msg, "打卡資訊", MessageBoxButton.OK,
