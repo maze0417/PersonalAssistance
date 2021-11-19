@@ -36,7 +36,7 @@ namespace Core
         private readonly ILogger _logger;
         private readonly Random rnd = new Random();
 
-        private const int StartHour = 13;
+        private const int StartHour = 9;
         private const int OffHour = 18;
 
         public HrResourceService(ILogger logger, IPunchCardService punchCardService) : base(logger)
