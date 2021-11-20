@@ -111,6 +111,7 @@ namespace Core
 
             if (!_instance.PunchedInTime.HasValue && isNormalWorkTime && now >= _instance.NextPunchedInTime)
             {
+                
                 await _punchCardService.PunchCardOnWorkAsync();
                 _instance.PunchedInTime = now;
                 _logger.LogInformation($"九點到了，打卡上班 :{now} ");
@@ -130,12 +131,13 @@ namespace Core
         {
             if (!_instance.NextPunchedInTime.HasValue)
             {
-                SetNextInTime();
+                SetNextTime(true);
+               
             }
 
             if (!_instance.NextPunchedOutTime.HasValue)
             {
-                SetNextOutTime();
+                SetNextTime(false);
             }
 
             var isTomorrow =
@@ -146,33 +148,40 @@ namespace Core
                 return;
             }
 
-            bool IsWeekend() => now.DayOfWeek == DayOfWeek.Saturday || now.DayOfWeek == DayOfWeek.Sunday;
-
-            var i = 1;
-            while (IsWeekend())
-            {
-                now = now.AddDays(i);
-            }
-
             _instance.PunchedInTime = null;
             _instance.PunchedOutTime = null;
-            SetNextInTime();
-            SetNextOutTime();
+            SetNextTime(true);
+            SetNextTime(false);
             _logger.LogInformation($"跨天重算下次打卡時間:{now} ");
 
-            void SetNextOutTime()
+            void SetNextTime(bool isPunchIn)
             {
-                var secs = GenerateRandomPunchSeconds(false);
-                var nextTime = now.Date.AddHours(now.Hour >= OffHour ? 24 + OffHour : OffHour).AddSeconds(secs);
-                _instance.NextPunchedOutTime = nextTime;
-                _logger.LogInformation($"下次下班打卡時間:{nextTime} ");
-            }
+              
+                var isWeekend = false;
+                var nextTime =now;
+                
+                bool IsWeekend() => nextTime.DayOfWeek == DayOfWeek.Saturday || nextTime.DayOfWeek == DayOfWeek.Sunday;
 
-            void SetNextInTime()
-            {
+                while (IsWeekend())
+                {
+                    nextTime = nextTime.AddDays(1);
+                    isWeekend = true;
+                }
                 var secs = GenerateRandomPunchSeconds(true);
-                var nextTime = now.Date.AddHours(now.Hour > StartHour ? 24 + StartHour : StartHour).AddSeconds(secs);
-                _instance.NextPunchedInTime = nextTime;
+                
+                 // nextTime =isWeekend ?  
+                 //     nextTime.Date.AddHours(isPunchIn? StartHour : OffHour).AddSeconds(secs): 
+                 //     nextTime.AddDays(1).Date.AddHours(isPunchIn? StartHour: OffHour).AddSeconds(secs);
+                 nextTime = nextTime.Date.AddHours(isPunchIn ? StartHour : OffHour).AddSeconds(secs);
+                if (isPunchIn)
+                {
+                    _instance.NextPunchedInTime = nextTime;    
+                }
+                if (!isPunchIn)
+                {
+                    _instance.NextPunchedOutTime = nextTime;    
+                }
+
                 _logger.LogInformation($"下次上班打卡時間:{nextTime} ");
             }
         }
