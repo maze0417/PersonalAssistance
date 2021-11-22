@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Core;
@@ -21,11 +20,12 @@ namespace UnitTests
         [TestCase("2021/11/20 09:00:00")]
         [TestCase("2021/11/21 09:00:00")]
         [TestCase("2021/11/22 17:21:00")]
+        [TestCase("2021/11/22 19:13:00")]
         public async Task CanPunchCardCorrectly(DateTime startMonitorTime)
         {
             var service = new HrResourceService(new ConsoleLogger(), new VoidPunchService());
             var interFace = (IHrResourceService) service;
-            var endDay = startMonitorTime.Date.AddDays(1);
+            var endDay = startMonitorTime.AddDays(1);
 
             var totalSecs = (int) (endDay - startMonitorTime).TotalSeconds;
 
@@ -40,13 +40,17 @@ namespace UnitTests
 
                     bool IsWeekend() => now.DayOfWeek == DayOfWeek.Saturday || now.DayOfWeek == DayOfWeek.Sunday;
 
-                    if (now == DateTime.Parse("2021/11/23 上午 10:00:00"))
-                    {
-                        Debugger.Break();
-                    }
+                    // if (now == DateTime.Parse("2021/11/22 下午 11:21:00"))
+                    // {
+                    //     Debugger.Break();
+                    // }
 
                     await service.PunchCardIfNeedAsync(now);
+                    if (sec % 3600 == 0)
+                    {
+                        Console.WriteLine($"[{now}]  {interFace.ToLogInfo()} ");
 
+                    }
                     interFace.NextPunchedInTime.Should().NotBeNull();
                     interFace.NextPunchedOutTime.Should().NotBeNull();
 
@@ -64,40 +68,16 @@ namespace UnitTests
                         interFace.PunchedInTime.Should().Be(null, because: $"now time: {now}");
                         interFace.PunchedOutTime.Should().Be(null, $"now time: {now}");
                     }
+
+                    var crossDay = now.Day - startMonitorTime.Day >= 1 ? now.Date : startMonitorTime;
                     
-                    if (start.Hour > 9)
-                    {
-                        interFace.PunchedInTime.Should().Be(null, because: $"now time: {now}");
+                    AssertWorkTimeShouldBeCorrect(interFace, now,crossDay);
 
-                    }   
+                    AssertOffTimeShouldBeCorrect(interFace, now,crossDay);
 
-                    if (now.Hour > 9  && start.Hour <= 9)
-                    {
-                        interFace.PunchedInTime.Should().NotBeNull($"now time: {now}");
-                    }
-
-                    if (now.Hour > 18  && start.Hour <= 18)
-                    {
-                        interFace.PunchedOutTime.Should().NotBeNull($"now time: {now}");
-                    }
-                    if (start.Hour > 18)
-                    {
-                        interFace.PunchedOutTime.Should().BeNull( $"now time: {now}");
-
-                    }   
-                    AssertWorkTimeShouldBeCorrect(interFace, now,start);
-
-                    AssertOffTimeShouldBeCorrect(interFace, now,start);
-
-                    if (sec % 3600 == 0)
-                    {
-                        Console.WriteLine($"[{now}]  {interFace.ToLogInfo()} ");
-
-                    }
+                  
                 }
    
-                //Console.WriteLine($"Completed {interFace.ToLogInfo()} ");
-
              
             }
         }
@@ -106,7 +86,9 @@ namespace UnitTests
         {
             bool IsWeekend() => now.DayOfWeek == DayOfWeek.Saturday || now.DayOfWeek == DayOfWeek.Sunday;
             
-            var shouldHavePunchTime = now>=interFace.NextPunchedOutTime ;
+            var shouldHavePunchTime = now>=interFace.NextPunchedOutTime && startMonitorTime.Hour<=18;
+            
+
             var log = $"now:{now} isweekend : {IsWeekend()} info:{interFace.ToLogInfo()}";
 
             
@@ -119,11 +101,15 @@ namespace UnitTests
             if (!shouldHavePunchTime)
             {
                 interFace.PunchedOutTime.Should().BeNull(log);
-                interFace.NextPunchedOutTime.Should().BeBefore(now.Date.AddHours(19),log);
-                interFace.NextPunchedOutTime.Should().BeAfter(now.Date.AddHours(18.5),log);
+                var nextTime =startMonitorTime.Day == now.Day && startMonitorTime.Hour>18?  
+                    now.AddDays(1):now;
                 
+                interFace.NextPunchedOutTime.Should().BeBefore(nextTime.Date.AddHours(19),log);
+                interFace.NextPunchedOutTime.Should().BeAfter(nextTime.Date.AddHours(18.5),log);
+
                 return;
             }
+            
             interFace.PunchedOutTime.Should().NotBeNull(log);
             interFace.NextPunchedOutTime.Should().BeBefore(now.Date.AddHours(19),log);
             interFace.NextPunchedOutTime.Should().BeAfter(now.Date.AddHours(18),log);
