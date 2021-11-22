@@ -19,13 +19,15 @@ namespace Core
 
         DateTime? NextPunchedOutTime { get; set; }
 
-        DateTime LastMonitTime { get; set; }
+        DateTime? LastMonitTime { get; set; }
 
-
+        
         TaskStatus TaskStatus { get; set; }
 
         Task<PunchCardResponse> PunchCardAsync(bool isOffWork);
         void Init();
+
+        string ToLogInfo();
     }
 
     public class HrResourceService : BaseApiClient, IHrResourceService
@@ -52,8 +54,9 @@ namespace Core
         DateTime? IHrResourceService.NextPunchedInTime { get; set; }
 
         DateTime? IHrResourceService.NextPunchedOutTime { get; set; }
-        DateTime IHrResourceService.LastMonitTime { get; set; }
+        DateTime? IHrResourceService.LastMonitTime { get; set; }
 
+        
 
         TaskStatus IHrResourceService.TaskStatus { get; set; }
 
@@ -74,6 +77,11 @@ namespace Core
         {
             var task = Task.Factory.StartNew(() => MonitorApiAsync(), TaskCreationOptions.LongRunning);
             _instance.TaskStatus = task.Status;
+        }
+
+        string IHrResourceService.ToLogInfo()
+        {
+            return $@"上班打卡: {_instance.PunchedInTime} 下次上班打卡: {_instance.NextPunchedInTime} 下班打卡: {_instance.PunchedOutTime} 下次下班打卡: {_instance.NextPunchedOutTime}";
         }
 
         private async Task MonitorApiAsync()
@@ -100,13 +108,16 @@ namespace Core
             var now = nowTime ?? DateTime.Now;
 
 
+            var isTomorrow = _instance.LastMonitTime.HasValue && now.Day - _instance.LastMonitTime.Value.Day>= 1;
+
             _instance.LastMonitTime = now;
+            
             var hour = now.Hour;
             var isNormalWorkTime = hour == StartHour;
             var isNormalOffTime = hour == OffHour;
 
 
-            SetNextPunchTime(now);
+            SetNextPunchTime(now,isTomorrow);
 
 
             if (!_instance.PunchedInTime.HasValue && isNormalWorkTime && now >= _instance.NextPunchedInTime)
@@ -127,7 +138,7 @@ namespace Core
         }
 
 
-        private void SetNextPunchTime(DateTime now)
+        private void SetNextPunchTime(DateTime now, bool isTomorrow)
         {
             if (!_instance.NextPunchedInTime.HasValue)
             {
@@ -140,9 +151,7 @@ namespace Core
                 SetNextTime(false);
             }
 
-            var isTomorrow =
-                _instance.NextPunchedInTime != null && (now - _instance.NextPunchedInTime.Value.Date).TotalDays >= 1;
-
+          
             if (!isTomorrow)
             {
                 return;
@@ -157,7 +166,7 @@ namespace Core
             void SetNextTime(bool isPunchIn)
             {
               
-                var isWeekend = false;
+                
                 var nextTime =now;
                 
                 bool IsWeekend() => nextTime.DayOfWeek == DayOfWeek.Saturday || nextTime.DayOfWeek == DayOfWeek.Sunday;
@@ -165,20 +174,24 @@ namespace Core
                 while (IsWeekend())
                 {
                     nextTime = nextTime.AddDays(1);
-                    isWeekend = true;
-                }
-                var secs = GenerateRandomPunchSeconds(true);
                 
-                 // nextTime =isWeekend ?  
-                 //     nextTime.Date.AddHours(isPunchIn? StartHour : OffHour).AddSeconds(secs): 
-                 //     nextTime.AddDays(1).Date.AddHours(isPunchIn? StartHour: OffHour).AddSeconds(secs);
-                 nextTime = nextTime.Date.AddHours(isPunchIn ? StartHour : OffHour).AddSeconds(secs);
+                }
+                var secs = GenerateRandomPunchSeconds(isPunchIn);
+                
                 if (isPunchIn)
                 {
+                    nextTime =IsWeekend() || now.Hour< 9.5 ?  
+                        nextTime.Date.AddHours(StartHour).AddSeconds(secs): 
+                        nextTime.AddDays(1).Date.AddHours(StartHour).AddSeconds(secs);
+
                     _instance.NextPunchedInTime = nextTime;    
                 }
                 if (!isPunchIn)
                 {
+                    nextTime =IsWeekend() || now.Hour< 19 ?  
+                        nextTime.Date.AddHours( OffHour).AddSeconds(secs): 
+                        nextTime.AddDays(1).Date.AddHours(OffHour).AddSeconds(secs);
+
                     _instance.NextPunchedOutTime = nextTime;    
                 }
 
