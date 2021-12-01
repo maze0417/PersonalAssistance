@@ -22,6 +22,7 @@ namespace UnitTests
         [TestCase("2021/11/22 17:21:00")]
         [TestCase("2021/11/22 19:13:00")]
         [TestCase("2021/11/30 00:13:00")]
+        [TestCase("2021/12/31 00:13:00")]
         public async Task CanPunchCardCorrectly(DateTime startMonitorTime)
         {
             var service = new HrResourceService(new ConsoleLogger(), new VoidPunchService());
