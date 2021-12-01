@@ -21,33 +21,29 @@ namespace UnitTests
         [TestCase("2021/11/21 09:00:00")]
         [TestCase("2021/11/22 17:21:00")]
         [TestCase("2021/11/22 19:13:00")]
-        [TestCase("2021/11/30 19:13:00")]
+        [TestCase("2021/11/30 00:13:00")]
         public async Task CanPunchCardCorrectly(DateTime startMonitorTime)
         {
             var service = new HrResourceService(new ConsoleLogger(), new VoidPunchService());
             var interFace = (IHrResourceService) service;
             var endDay = startMonitorTime.AddDays(1);
 
-            var totalSecs = (int) (endDay - startMonitorTime).TotalSeconds;
+            var totalMins = (int) (endDay - startMonitorTime).TotalMinutes;
 
             var totalDays = 8;
             foreach (var day in Enumerable.Range(0, totalDays))
             {
                 var start = startMonitorTime.AddDays(day);
 
-                foreach (var sec in Enumerable.Range(0, totalSecs))
+                foreach (var min in Enumerable.Range(0, totalMins))
                 {
-                    var now = start.AddSeconds(sec);
+                    var now = start.AddMinutes(min);
 
                     bool IsWeekend() => now.DayOfWeek == DayOfWeek.Saturday || now.DayOfWeek == DayOfWeek.Sunday;
 
-                    // if (now == DateTime.Parse("2021/11/22 下午 11:21:00"))
-                    // {
-                    //     Debugger.Break();
-                    // }
 
                     await service.PunchCardIfNeedAsync(now);
-                    if (sec % 3600 == 0)
+                    if (min % 60 == 0)
                     {
                         Console.WriteLine($"[{now}]  {interFace.ToLogInfo()} ");
 

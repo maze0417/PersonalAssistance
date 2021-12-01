@@ -108,7 +108,11 @@ namespace Core
             var now = nowTime ?? DateTime.Now;
 
 
-            var isTomorrow = _instance.LastMonitTime.HasValue && now.Day - _instance.LastMonitTime.Value.Day>= 1;
+           
+            var isTomorrow = _instance.LastMonitTime.HasValue &&
+                             now.Year - _instance.LastMonitTime?.Year >= 1 ||
+                             now.Month - _instance.LastMonitTime?.Month >= 1 ||
+                             now.Day - _instance.LastMonitTime?.Day >= 1;
 
             _instance.LastMonitTime = now;
             
