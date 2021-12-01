@@ -21,6 +21,7 @@ namespace UnitTests
         [TestCase("2021/11/21 09:00:00")]
         [TestCase("2021/11/22 17:21:00")]
         [TestCase("2021/11/22 19:13:00")]
+        [TestCase("2021/11/30 19:13:00")]
         public async Task CanPunchCardCorrectly(DateTime startMonitorTime)
         {
             var service = new HrResourceService(new ConsoleLogger(), new VoidPunchService());
@@ -69,7 +70,7 @@ namespace UnitTests
                         interFace.PunchedOutTime.Should().Be(null, $"now time: {now}");
                     }
 
-                    var crossDay = now.Day - startMonitorTime.Day >= 1 ? now.Date : startMonitorTime;
+                    var crossDay =now.Year - startMonitorTime.Year >= 1 || now.Month - startMonitorTime.Month >= 1|| now.Day - startMonitorTime.Day >= 1  ? now.Date : startMonitorTime;
                     
                     AssertWorkTimeShouldBeCorrect(interFace, now,crossDay);
 
@@ -140,17 +141,17 @@ namespace UnitTests
                 var nextTime =startMonitorTime.Day == now.Day && startMonitorTime.Hour>9?  
                      now.AddDays(1):now;
                 
-                interFace.NextPunchedInTime.Should().BeBefore(nextTime.Date.AddHours(10),log);
-                interFace.NextPunchedInTime.Should().BeAfter(nextTime.Date.AddHours(9),log);
+                interFace.NextPunchedInTime.Should().BeOnOrBefore(nextTime.Date.AddHours(10),log);
+                interFace.NextPunchedInTime.Should().BeOnOrAfter(nextTime.Date.AddHours(9),log);
                 
                 return;
             }
 
             interFace.PunchedInTime.Should().NotBeNull(log);
-            interFace.NextPunchedInTime.Should().BeBefore(now.Date.AddHours(10),log);
-            interFace.NextPunchedInTime.Should().BeAfter(now.Date.AddHours(9),log);
-            interFace.PunchedInTime.Should().BeBefore(now.Date.AddHours(10),log);
-            interFace.PunchedInTime.Should().BeAfter(now.Date.AddHours(9),log);
+            interFace.NextPunchedInTime.Should().BeOnOrBefore(now.Date.AddHours(10),log);
+            interFace.NextPunchedInTime.Should().BeOnOrAfter(now.Date.AddHours(9),log);
+            interFace.PunchedInTime.Should().BeOnOrBefore(now.Date.AddHours(10),log);
+            interFace.PunchedInTime.Should().BeOnOrAfter(now.Date.AddHours(9),log);
         }
     }
 }
