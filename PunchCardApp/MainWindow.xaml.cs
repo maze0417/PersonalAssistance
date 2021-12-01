@@ -63,8 +63,7 @@ namespace PunchCardApp
 
                 case PowerModes.Suspend:
                 {
-                    AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync(false));
-
+                    //AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync(false));
                     break;
                 }
             }
