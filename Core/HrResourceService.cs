@@ -46,6 +46,17 @@ namespace Core
             _logger = logger;
             _punchCardService = punchCardService;
             _instance = this;
+            
+            var (onWorker, offWork) = AsyncHelper.RunSync(() => _punchCardService.GetDayCardDetailAsync());
+
+            if (DateTime.TryParse(onWorker, out var result))
+            {
+                _instance.PunchedInTime = result;
+            }
+            if (DateTime.TryParse(offWork, out var result2))
+            {
+                _instance.PunchedOutTime = result2;
+            }
         }
 
         DateTime? IHrResourceService.PunchedInTime { get; set; }
@@ -75,6 +86,7 @@ namespace Core
 
         void IHrResourceService.Init()
         {
+           
             var task = Task.Factory.StartNew(() => MonitorApiAsync(), TaskCreationOptions.LongRunning);
             _instance.TaskStatus = task.Status;
         }

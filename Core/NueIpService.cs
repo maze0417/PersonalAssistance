@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -36,12 +35,16 @@ namespace Core
 
         private async Task<PunchCardResponse> PunchCardAsync(bool isOffWork)
         {
+            var token = await EnsureLoginAsync();
+          
+            return await PunchCardAsync(token, isOffWork);
+        }
+
+        private async Task<string> EnsureLoginAsync()
+        {
             var response = await LoginAsync();
             if (string.IsNullOrEmpty(response))
-                return new PunchCardResponse
-                {
-                    success = false
-                };
+                return null;
 
             var matches = _tokenFinder.Match(response);
             var tokenHtml = matches.Value;
@@ -59,8 +62,7 @@ namespace Core
                 throw new Exception(msg.ToString());
             }
 
-
-            return await PunchCardAsync(token, isOffWork);
+            return token;
         }
 
         private async Task<string> LoginAsync()
@@ -128,9 +130,31 @@ namespace Core
             return PunchCardAsync(true);
         }
 
-        Task<List<string>> IPunchCardService.GetDayCardDetailAsync()
+        async Task<(string ,string)> IPunchCardService.GetDayCardDetailAsync()
         {
-            throw new NotImplementedException();
+            await EnsureLoginAsync();
+
+            var content = new 
+            {
+                action = "getClock"
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, PunchCardUrl)
+            {
+                Content = content.ToFormRequest()
+            };
+
+            var raw = await SendAsync(request);
+
+            var response = JsonSerializer.Deserialize<GetClockResponse>(raw);
+
+            if (response?.user==null)
+            {
+                return (null, null);
+            }
+
+            return (response.user.A1, response.user.A2);
         }
+        
     }
 }

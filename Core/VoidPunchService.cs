@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Core.Models;
 
 namespace Core
@@ -19,9 +17,9 @@ namespace Core
             return EmptyTask;
         }
 
-        public Task<List<string>> GetDayCardDetailAsync()
+        public Task<(string onWorker, string offWork)> GetDayCardDetailAsync()
         {
-            return Task.FromResult(new List<string>());
+            return Task.FromResult((string.Empty, string.Empty));
         }
     }
 }

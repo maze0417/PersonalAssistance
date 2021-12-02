@@ -10,6 +10,6 @@ namespace Core
 
         Task<PunchCardResponse> PunchCardOffWorkAsync();
 
-        Task<List<string>> GetDayCardDetailAsync();
+        Task<(string onWorker, string offWork)> GetDayCardDetailAsync();
     }
 }

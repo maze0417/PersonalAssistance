@@ -48,7 +48,7 @@ namespace Core
             throw new NotImplementedException();
         }
 
-        async Task<List<string>> IPunchCardService.GetDayCardDetailAsync()
+        async Task<(string onWorker, string offWork)> IPunchCardService.GetDayCardDetailAsync()
         {
             var content = new GetDaCardDetailRequest
             {
@@ -67,7 +67,7 @@ namespace Core
             request.Headers.Add("cookie", _appConfiguration.Cookie);
             var response = await SendWithJsonResponseAsync<GetDaCardDetailResponse>(request);
 
-            return response.data.First().cardTime;
+            return (response.data.First().cardTime.FirstOrDefault(),response.data.First().cardTime.LastOrDefault());
         }
     }
 }

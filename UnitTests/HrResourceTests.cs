@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Core;
 using NUnit.Framework;
 using FluentAssertions;
+using NSubstitute;
+using PunchCardApp;
 
 namespace UnitTests
 {
@@ -12,6 +14,19 @@ namespace UnitTests
         [SetUp]
         public void Setup()
         {
+        }
+
+        [Test]
+        public  void CanQueryDaily()
+        {
+            var config = Substitute.For<IAppConfiguration>();
+            config.NueIpCompany.Returns("507641428");
+            config.NueIpId.Returns("GJ0080");
+            config.NueIpPwd.Returns("");
+            var service = new HrResourceService(new ConsoleLogger(), new NueIpService(new Logger(),config));
+            var interFace = (IHrResourceService) service;
+
+            Console.WriteLine(interFace.PunchedInTime);
         }
 
         [TestCase("2021/11/18 00:00:00")]
@@ -23,6 +38,7 @@ namespace UnitTests
         [TestCase("2021/11/22 19:13:00")]
         [TestCase("2021/11/30 00:13:00")]
         [TestCase("2021/12/31 00:13:00")]
+        [TestCase("2021/12/1 20:13:00")]
         public async Task CanPunchCardCorrectly(DateTime startMonitorTime)
         {
             var service = new HrResourceService(new ConsoleLogger(), new VoidPunchService());
@@ -46,7 +62,7 @@ namespace UnitTests
                     await service.PunchCardIfNeedAsync(now);
                     if (min % 60 == 0)
                     {
-                        Console.WriteLine($"[{now}]  {interFace.ToLogInfo()} ");
+                        Console.WriteLine($@"[{now}]  {interFace.ToLogInfo()} ");
 
                     }
                     interFace.NextPunchedInTime.Should().NotBeNull();

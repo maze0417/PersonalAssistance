@@ -71,7 +71,7 @@ namespace PunchCardApp
 
         private void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
         {
-            AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync(false));
+            //AsyncHelper.RunSync(() => _hrResourceService.PunchCardAsync(false));
         }
 
         private void MinizeIcon()
