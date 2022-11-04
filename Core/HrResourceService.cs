@@ -229,7 +229,7 @@ namespace Core
 
         private int GenerateRandomPunchSeconds(bool isPunchIn)
         {
-            return isPunchIn ? rnd.Next(0, 1800) : rnd.Next(1801, 3300);
+            return isPunchIn ? rnd.Next(1800, 2400) : rnd.Next(2401, 3300);
         }
     }
 }
